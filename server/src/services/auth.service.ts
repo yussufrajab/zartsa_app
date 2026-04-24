@@ -1,12 +1,11 @@
 import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { env } from '../config/env';
 import { AppError, UnauthorizedError } from '../utils/errors';
 import { cacheGet, cacheSet } from './redis.service';
 import type { LoginRequest, RegisterRequest, AuthUser, AuthTokens } from '@zartsa/shared';
 
-const prisma = new PrismaClient();
 const secret = new TextEncoder().encode(env.JWT_SECRET);
 
 function generateOtp(): string {

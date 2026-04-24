@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum UserRole {
@@ -84,7 +84,7 @@ model User {
   bookings          Booking[]
   complaints        Complaint[]
   lostItemReports   LostItemReport[]
-  foundItemReports  FoundItemReport[]
+  foundItemReports  FoundItemReport[]  // reportedBy links to User
   notifications     Notification[]
   savedRoutes       SavedRoute[]
   notificationPrefs NotificationPreference[]
@@ -124,8 +124,8 @@ model FareTable {
   routeType   String   // "daladala" or "shamba"
   departure   String
   destination String
-  baseFare    Decimal  @db decimal(10, 2)
-  surcharge   Decimal  @db decimal(10, 2) @default(0)
+  baseFare    Decimal  @default(0)
+  surcharge   Decimal  @default(0)
   currency    String   @default("TZS")
   effectiveDate DateTime
   createdAt   DateTime @default(now())
@@ -142,8 +142,8 @@ model Booking {
   destination     String
   travelDate      DateTime
   passengerCount  Int          @default(1)
-  seatNumbers     String[]     // stored as JSON array
-  totalAmount     Decimal      @db decimal(10, 2)
+  seatNumbers     Json          // stored as JSON array
+  totalAmount     Decimal
   currency        String       @default("TZS")
   paymentMethod   String
   paymentRef      String?
@@ -167,8 +167,8 @@ model Complaint {
   route           String
   incidentDate    DateTime
   category        String
-  description     String          @db text
-  attachments     String[]
+  description     String
+  attachments     Json            // stored as JSON array
   status          ComplaintStatus @default(RECEIVED)
   assignedTo      String?
   resolution      String?
@@ -184,7 +184,7 @@ model Complaint {
 model LostItemReport {
   id          String     @id @default(cuid())
   userId      String
-  description String     @db text
+  description String
   category    String
   route       String
   travelDate  DateTime
@@ -202,7 +202,7 @@ model LostItemReport {
 model FoundItemReport {
   id          String     @id @default(cuid())
   reportedBy  String
-  description String     @db text
+  description String
   category    String
   busNumber   String
   route       String
@@ -212,6 +212,8 @@ model FoundItemReport {
   claimedBy   String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
+
+  reporter User @relation(fields: [reportedBy], references: [id], onDelete: Cascade)
 
   @@map("found_item_reports")
 }
@@ -223,7 +225,7 @@ model Fine {
   offenseType   String
   offenseDate   DateTime
   location      String
-  penaltyAmount Decimal           @db decimal(10, 2)
+  penaltyAmount Decimal
   currency      String            @default("TZS")
   controlNumber String            @unique
   paymentStatus FinePaymentStatus @default(OUTSTANDING)
@@ -240,8 +242,8 @@ model Announcement {
   id          String               @id @default(cuid())
   titleSw     String
   titleEn     String
-  contentSw   String               @db text
-  contentEn   String               @db text
+  contentSw   String
+  contentEn   String
   category    AnnouncementCategory
   publishedAt DateTime?
   sourceAuthority String?
