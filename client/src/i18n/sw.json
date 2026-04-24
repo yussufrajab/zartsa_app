@@ -1,0 +1,82 @@
+{
+  "app": {
+    "name": "ZARTSA",
+    "tagline": "Mamlaka ya Barabara na Usalama Zanzibar"
+  },
+  "nav": {
+    "home": "Nyumbani",
+    "fares": "Nauli",
+    "verify": "Thibitisha",
+    "track": "Fuatilia",
+    "tickets": "Tiketi",
+    "lostFound": "Potee & Patikana",
+    "complaints": "Malalamiko",
+    "news": "Habari",
+    "fines": "Faini",
+    "profile": "Wasifu",
+    "login": "Ingia",
+    "logout": "Toka",
+    "register": "Jisajili",
+    "language": "Lugha"
+  },
+  "common": {
+    "search": "Tafuta",
+    "loading": "Inapakia...",
+    "error": "Hitilafu",
+    "retry": "Jaribu tena",
+    "save": "Hifadhi",
+    "cancel": "Ghairi",
+    "submit": "Wasilisha",
+    "back": "Rudi",
+    "noResults": "Hakuna matokeo",
+    "success": "Imefanikiwa",
+    "required": "Hili linahitajika"
+  },
+  "auth": {
+    "phone": "Namba ya simu",
+    "otp": "Namba ya uthibitisho",
+    "sendOtp": "Tuma namba ya uthibitisho",
+    "login": "Ingia",
+    "register": "Jisajili",
+    "firstName": "Jina la kwanza",
+    "lastName": "Jina la mwisho",
+    "email": "Barua pepe",
+    "language": "Lugha unayopendelea"
+  },
+  "fare": {
+    "title": "Nauli Rasmi",
+    "from": "Kutoka",
+    "to": "Kwenda",
+    "search": "Tafuta nauli",
+    "baseFare": "Nauli ya msingi",
+    "surcharge": "Ada ya nyongeza",
+    "total": "Jumla",
+    "effectiveDate": "Tarehe ya matumizi",
+    "routeType": "Aina ya njia",
+    "daladala": "Daladala",
+    "shamba": "Shamba"
+  },
+  "verify": {
+    "title": "Thibitisha Hati",
+    "plateNumber": "Namba ya usajili",
+    "licenseNumber": "Namba ya leseni",
+    "badgeNumber": "Namba ya beji",
+    "verify": "Thibitisha",
+    "valid": "Halali",
+    "expired": "Imeisha muda",
+    "suspended": "Imesimamishwa",
+    "invalid": "Batili",
+    "notFound": "Haipatikani"
+  },
+  "track": {
+    "title": "Fuatilia Mabasi",
+    "liveMap": "Ramani ya moja kwa moja",
+    "filter": "Chuja",
+    "route": "Njia",
+    "operator": "Mwendeshaji",
+    "serviceType": "Aina ya huduma",
+    "eta": "Muda wa kuwasili",
+    "delayed": "Imeachwa nyuma",
+    "lastSeen": "Iliwahi kuonekana"
+  }
+}

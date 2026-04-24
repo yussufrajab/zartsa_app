@@ -1,0 +1,82 @@
+{
+  "app": {
+    "name": "ZARTSA",
+    "tagline": "Zanzibar Road Transport & Safety Authority"
+  },
+  "nav": {
+    "home": "Home",
+    "fares": "Fares",
+    "verify": "Verify",
+    "track": "Track",
+    "tickets": "Tickets",
+    "lostFound": "Lost & Found",
+    "complaints": "Complaints",
+    "news": "News",
+    "fines": "Fines",
+    "profile": "Profile",
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "language": "Language"
+  },
+  "common": {
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "back": "Back",
+    "noResults": "No results found",
+    "success": "Success",
+    "required": "This field is required"
+  },
+  "auth": {
+    "phone": "Phone number",
+    "otp": "Verification code",
+    "sendOtp": "Send verification code",
+    "login": "Login",
+    "register": "Register",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "language": "Preferred language"
+  },
+  "fare": {
+    "title": "Official Fares",
+    "from": "From",
+    "to": "To",
+    "search": "Search fares",
+    "baseFare": "Base fare",
+    "surcharge": "Surcharge",
+    "total": "Total",
+    "effectiveDate": "Effective date",
+    "routeType": "Route type",
+    "daladala": "Daladala",
+    "shamba": "Shamba"
+  },
+  "verify": {
+    "title": "Verify Document",
+    "plateNumber": "Plate number",
+    "licenseNumber": "License number",
+    "badgeNumber": "Badge number",
+    "verify": "Verify",
+    "valid": "Valid",
+    "expired": "Expired",
+    "suspended": "Suspended",
+    "invalid": "Invalid",
+    "notFound": "Not found"
+  },
+  "track": {
+    "title": "Track Buses",
+    "liveMap": "Live Map",
+    "filter": "Filter",
+    "route": "Route",
+    "operator": "Operator",
+    "serviceType": "Service type",
+    "eta": "ETA",
+    "delayed": "Delayed",
+    "lastSeen": "Last seen"
+  }
+}
