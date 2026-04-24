@@ -1,16 +1,20 @@
 import express from 'express';
+import { createServer } from 'http';
 import helmet from 'helmet';
 import { env } from './config/env';
 import { corsMiddleware } from './middleware/cors';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import { routes } from './routes';
+import { setupSocketIO } from './socket';
+import { startAutoUnclaimJob } from './jobs/auto-unclaim';
 
 import './processors/push.processor';
 import './processors/sms.processor';
 import './processors/email.processor';
 
 const app = express();
+const httpServer = createServer(app);
 
 app.use(helmet());
 app.use(corsMiddleware);
@@ -25,8 +29,11 @@ app.get('/health', (_req, res) => {
 
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
+setupSocketIO(httpServer);
+
+httpServer.listen(env.PORT, () => {
   logger.info(`ZARTSA API running on port ${env.PORT} [${env.NODE_ENV}]`);
+  startAutoUnclaimJob().catch((err) => logger.error('Failed to start auto-unclaim job', { error: (err as Error).message }));
 });
 
 export default app;

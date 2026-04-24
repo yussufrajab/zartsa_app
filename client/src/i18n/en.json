@@ -122,9 +122,21 @@
     "route": "Route",
     "operator": "Operator",
     "serviceType": "Service type",
-    "eta": "ETA",
+    "eta": "ETA (minutes)",
     "delayed": "Delayed",
-    "lastSeen": "Last seen"
+    "lastSeen": "Last known location",
+    "busStops": "Bus Stops",
+    "staleWarning": "GPS data older than 5 minutes",
+    "daladala": "Daladala",
+    "shamba": "Shamba",
+    "activeBuses": "Active buses",
+    "staleBuses": "Stale buses",
+    "noBuses": "No buses found",
+    "gpsUpdate": "Update GPS",
+    "updateSuccess": "Location updated",
+    "delayThreshold": "Delay threshold (minutes)",
+    "routeDeviated": "Route deviation",
+    "busCount": "Bus count"
   },
   "news": {
     "title": "News & Announcements",
@@ -188,5 +200,33 @@
     "date": "Date",
     "amount": "Amount",
     "refNumber": "Reference number"
+  },
+  "lostFound": {
+    "title": "Lost & Found",
+    "reportLost": "Report Lost Item",
+    "reportFound": "Report Found Item",
+    "searchPlaceholder": "Search by keyword...",
+    "allCategories": "All",
+    "categories": {
+      "electronics": "Electronics",
+      "bags": "Bags",
+      "documents": "Documents",
+      "clothing": "Clothing",
+      "jewelry": "Jewelry",
+      "keys": "Keys",
+      "other": "Other"
+    },
+    "description": "Description",
+    "category": "Category",
+    "route": "Route",
+    "bus": "Bus",
+    "busNumber": "Bus number",
+    "travelDate": "Travel date",
+    "foundDate": "Date found",
+    "contactInfo": "Contact information",
+    "photo": "Photo (optional)",
+    "submitReport": "Submit report",
+    "claim": "Claim",
+    "noResults": "No items found"
   }
 }

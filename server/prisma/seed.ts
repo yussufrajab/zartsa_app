@@ -57,6 +57,21 @@ async function main() {
     skipDuplicates: true,
   });
 
+  // Create sample bus locations for fleet tracking
+  const busLocations = [
+    { vehiclePlate: 'T123ABC', operatorId: 'zartsa-transit', route: 'Stone Town - Fuoni', serviceType: 'daladala', latitude: -6.1659, longitude: 39.1989, speed: 35, heading: 180, recordedAt: new Date() },
+    { vehiclePlate: 'T456DEF', operatorId: 'zartsa-transit', route: 'Stone Town - Mwanakwerekwe', serviceType: 'daladala', latitude: -6.175, longitude: 39.205, speed: 28, heading: 90, recordedAt: new Date() },
+    { vehiclePlate: 'T789GHI', operatorId: 'zanzibar-express', route: 'Stone Town - Paje', serviceType: 'shamba', latitude: -6.19, longitude: 39.35, speed: 55, heading: 270, recordedAt: new Date() },
+    { vehiclePlate: 'T321JKL', operatorId: 'zanzibar-express', route: 'Stone Town - Nungwi', serviceType: 'shamba', latitude: -5.95, longitude: 39.25, speed: 60, heading: 0, recordedAt: new Date() },
+    { vehiclePlate: 'T654MNO', operatorId: 'zartsa-transit', route: 'Stone Town - Kiembe Samaki', serviceType: 'daladala', latitude: -6.17, longitude: 39.21, speed: 20, heading: 45, recordedAt: new Date() },
+    // Stale data (>5 min old)
+    { vehiclePlate: 'T987PQR', operatorId: 'zartsa-transit', route: 'Stone Town - Jambiani', serviceType: 'shamba', latitude: -6.23, longitude: 39.5, speed: 0, heading: 0, recordedAt: new Date(Date.now() - 10 * 60 * 1000) },
+  ];
+
+  for (const loc of busLocations) {
+    await prisma.busLocation.create({ data: loc });
+  }
+
   console.log('Seeding complete.');
 }
 

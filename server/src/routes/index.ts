@@ -5,6 +5,8 @@ import { faresRoutes } from './fares.routes';
 import { verifyRoutes } from './verify.routes';
 import { newsRoutes } from './news.routes';
 import { usersRoutes } from './users.routes';
+import { trackingRoutes } from './tracking.routes';
+import { lostFoundRoutes } from './lost-found.routes';
 
 const router = Router();
 
@@ -14,5 +16,7 @@ router.use('/fares', faresRoutes);
 router.use('/verify', verifyRoutes);
 router.use('/news', newsRoutes);
 router.use('/users', usersRoutes);
+router.use('/tracking', trackingRoutes);
+router.use('/lost-found', lostFoundRoutes);
 
 export const routes = router;

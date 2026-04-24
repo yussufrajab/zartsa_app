@@ -122,9 +122,21 @@
     "route": "Njia",
     "operator": "Mwendeshaji",
     "serviceType": "Aina ya huduma",
-    "eta": "Muda wa kuwasili",
+    "eta": "Muda wa kuwasili (dakika)",
     "delayed": "Imeachwa nyuma",
-    "lastSeen": "Iliwahi kuonekana"
+    "lastSeen": "Iliwahi kuonekana",
+    "busStops": "Vituo vya mabasi",
+    "staleWarning": "Data ya GPS ya zamani zaidi ya dakika 5",
+    "daladala": "Daladala",
+    "shamba": "Shamba",
+    "activeBuses": "Mabasi yanayoendelea",
+    "staleBuses": "Mabasi yaliyoisha muda",
+    "noBuses": "Hakuna mabasi yaliyopatikana",
+    "gpsUpdate": "Sasisha GPS",
+    "updateSuccess": "Mahali pakusasishwa",
+    "delayThreshold": "Kiwango cha kuchelewa (dakika)",
+    "routeDeviated": "Njia imepotoka",
+    "busCount": "Idadi ya mabasi"
   },
   "news": {
     "title": "Habari na Tangazo",
@@ -188,5 +200,33 @@
     "date": "Tarehe",
     "amount": "Kiasi",
     "refNumber": "Namba ya marejeleo"
+  },
+  "lostFound": {
+    "title": "Potee & Patikana",
+    "reportLost": "Ripoti Kipotee",
+    "reportFound": "Ripoti Kilichopatikana",
+    "searchPlaceholder": "Tafuta kwa kihusishi...",
+    "allCategories": "Zote",
+    "categories": {
+      "electronics": "Vifaa vya Elektroniki",
+      "bags": "Mifuko",
+      "documents": "Hati",
+      "clothing": "Nguo",
+      "jewelry": "Vito",
+      "keys": "Funguo",
+      "other": "Nyingine"
+    },
+    "description": "Maelezo",
+    "category": "Aina",
+    "route": "Njia",
+    "bus": "Basi",
+    "busNumber": "Namba ya basi",
+    "travelDate": "Tarehe ya safari",
+    "foundDate": "Tarehe iliyopatikana",
+    "contactInfo": "Maelezo ya mawasiliano",
+    "photo": "Picha (hiari)",
+    "submitReport": "Wasilisha ripoti",
+    "claim": "Dai",
+    "noResults": "Hakuna vitu vilivyopatikana"
   }
 }
