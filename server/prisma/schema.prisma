@@ -1,0 +1,300 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CITIZEN
+  OPERATOR
+  DRIVER
+  OFFICER
+  ADMIN
+}
+
+enum Language {
+  sw
+  en
+}
+
+enum ComplaintStatus {
+  RECEIVED
+  UNDER_REVIEW
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
+enum FinePaymentStatus {
+  OUTSTANDING
+  PAID
+  DISPUTED
+  WAIVED
+}
+
+enum TicketStatus {
+  ACTIVE
+  CANCELLED
+  USED
+  EXPIRED
+}
+
+enum ItemStatus {
+  REPORTED
+  FOUND
+  MATCHED
+  CLAIMED
+  UNCLAIMED
+  REMOVED
+}
+
+enum NotificationChannel {
+  IN_APP
+  SMS
+  EMAIL
+}
+
+enum AnnouncementCategory {
+  FARE_ADJUSTMENT
+  ROAD_CLOSURE
+  SCHEDULE_CHANGE
+  REGULATORY_UPDATE
+  GENERAL_NOTICE
+}
+
+model User {
+  id                String    @id @default(cuid())
+  phone             String    @unique
+  email             String?   @unique
+  passwordHash      String?
+  firstName         String
+  lastName          String
+  nationalId        String?   @unique
+  role              UserRole  @default(CITIZEN)
+  preferredLanguage Language  @default(sw)
+  isActive          Boolean   @default(true)
+  failedLoginAttempts Int     @default(0)
+  lockedUntil       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  bookings          Booking[]
+  complaints        Complaint[]
+  lostItemReports   LostItemReport[]
+  foundItemReports  FoundItemReport[]
+  notifications     Notification[]
+  savedRoutes       SavedRoute[]
+  notificationPrefs NotificationPreference[]
+
+  @@map("users")
+}
+
+model SavedRoute {
+  id          String  @id @default(cuid())
+  userId      String
+  departure   String
+  destination String
+  label       String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("saved_routes")
+}
+
+model NotificationPreference {
+  id      String             @id @default(cuid())
+  userId  String
+  type    String
+  inApp   Boolean            @default(true)
+  sms     Boolean            @default(false)
+  email   Boolean            @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@map("notification_preferences")
+}
+
+model FareTable {
+  id          String   @id @default(cuid())
+  routeType   String   // "daladala" or "shamba"
+  departure   String
+  destination String
+  baseFare    Decimal  @db decimal(10, 2)
+  surcharge   Decimal  @db decimal(10, 2) @default(0)
+  currency    String   @default("TZS")
+  effectiveDate DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([routeType, departure, destination])
+  @@map("fare_tables")
+}
+
+model Booking {
+  id              String       @id @default(cuid())
+  userId          String
+  departure       String
+  destination     String
+  travelDate      DateTime
+  passengerCount  Int          @default(1)
+  seatNumbers     String[]     // stored as JSON array
+  totalAmount     Decimal      @db decimal(10, 2)
+  currency        String       @default("TZS")
+  paymentMethod   String
+  paymentRef      String?
+  status          TicketStatus @default(ACTIVE)
+  qrCode          String?
+  vehiclePlate    String?
+  operatorId      String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("bookings")
+}
+
+model Complaint {
+  id              String          @id @default(cuid())
+  referenceNumber String          @unique
+  userId          String?
+  vehiclePlate    String
+  route           String
+  incidentDate    DateTime
+  category        String
+  description     String          @db text
+  attachments     String[]
+  status          ComplaintStatus @default(RECEIVED)
+  assignedTo      String?
+  resolution      String?
+  resolvedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("complaints")
+}
+
+model LostItemReport {
+  id          String     @id @default(cuid())
+  userId      String
+  description String     @db text
+  category    String
+  route       String
+  travelDate  DateTime
+  contactInfo String
+  status      ItemStatus @default(REPORTED)
+  matchedWith String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("lost_item_reports")
+}
+
+model FoundItemReport {
+  id          String     @id @default(cuid())
+  reportedBy  String
+  description String     @db text
+  category    String
+  busNumber   String
+  route       String
+  foundDate   DateTime
+  photoUrl    String?
+  status      ItemStatus @default(FOUND)
+  claimedBy   String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@map("found_item_reports")
+}
+
+model Fine {
+  id            String            @id @default(cuid())
+  drivingLicense String?
+  vehiclePlate  String?
+  offenseType   String
+  offenseDate   DateTime
+  location      String
+  penaltyAmount Decimal           @db decimal(10, 2)
+  currency      String            @default("TZS")
+  controlNumber String            @unique
+  paymentStatus FinePaymentStatus @default(OUTSTANDING)
+  paymentRef    String?
+  paidAt        DateTime?
+  zimsSyncedAt  DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@map("fines")
+}
+
+model Announcement {
+  id          String               @id @default(cuid())
+  titleSw     String
+  titleEn     String
+  contentSw   String               @db text
+  contentEn   String               @db text
+  category    AnnouncementCategory
+  publishedAt DateTime?
+  sourceAuthority String?
+  isPublished Boolean              @default(false)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@map("announcements")
+}
+
+model Notification {
+  id         String             @id @default(cuid())
+  userId     String
+  type       String
+  title      String
+  message    String
+  channel    NotificationChannel
+  isRead     Boolean             @default(false)
+  sentAt     DateTime?
+  deliveredAt DateTime?
+  createdAt  DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model BusLocation {
+  id           String   @id @default(cuid())
+  vehiclePlate String
+  operatorId   String?
+  route        String
+  serviceType  String   // "daladala" or "shamba"
+  latitude     Float
+  longitude    Float
+  speed        Float?
+  heading      Float?
+  recordedAt   DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([vehiclePlate])
+  @@index([recordedAt])
+  @@map("bus_locations")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  resource  String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
