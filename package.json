@@ -1,0 +1,17 @@
+{
+  "name": "zartsa",
+  "private": true,
+  "workspaces": ["client", "server", "shared"],
+  "scripts": {
+    "dev:client": "npm run dev --workspace=client",
+    "dev:server": "npm run dev --workspace=server",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "db:push": "npm run db:push --workspace=server",
+    "db:seed": "npm run db:seed --workspace=server",
+    "db:studio": "npm run db:studio --workspace=server"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
