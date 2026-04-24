@@ -6,6 +6,10 @@ import { errorHandler } from './middleware/errorHandler';
 import { logger } from './utils/logger';
 import { routes } from './routes';
 
+import './processors/push.processor';
+import './processors/sms.processor';
+import './processors/email.processor';
+
 const app = express();
 
 app.use(helmet());

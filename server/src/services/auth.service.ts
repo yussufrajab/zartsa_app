@@ -4,6 +4,8 @@ import { prisma } from '../lib/prisma';
 import { env } from '../config/env';
 import { AppError, UnauthorizedError } from '../utils/errors';
 import { cacheGet, cacheSet } from './redis.service';
+import { createAndSendNotification } from './notification.service';
+import { logger } from '../utils/logger';
 import type { LoginRequest, RegisterRequest, AuthUser, AuthTokens } from '@zartsa/shared';
 
 const secret = new TextEncoder().encode(env.JWT_SECRET);
@@ -74,6 +76,17 @@ export async function register(data: RegisterRequest): Promise<AuthTokens> {
 
   // Remove used OTP
   await cacheSet(`otp:${data.phone}`, '', 1);
+
+  // Send welcome notification
+  await createAndSendNotification({
+    userId: user.id,
+    type: 'payment_confirmation',
+    title: 'Karibu ZARTSA!',
+    message: `Hongera ${user.firstName}! Akaunti yako ya ZARTSA imeundwa kwa mafanikio. Unaweza sasa kutumia huduma zote.`,
+  }).catch((err) => {
+    // Don't fail registration if notification fails
+    logger.warn('Failed to send welcome notification', { error: err.message });
+  });
 
   return generateTokens(user.id, user.role);
 }

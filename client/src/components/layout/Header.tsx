@@ -1,13 +1,16 @@
 'use client';
 
-import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Menu, Globe } from 'lucide-react';
 import { useState } from 'react';
+import Link from 'next/link';
 import { MobileNav } from './MobileNav';
+import { NotificationBell } from '../NotificationBell';
+import { useAuth } from '../providers/AuthProvider';
 
 export function Header() {
   const { t, i18n } = useTranslation();
+  const { isAuthenticated } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const toggleLanguage = () => {
@@ -23,6 +26,7 @@ export function Header() {
         </Link>
 
         <div className="flex items-center gap-2">
+          {isAuthenticated && <NotificationBell />}
           <button
             onClick={toggleLanguage}
             className="flex items-center gap-1 rounded-md px-2 py-1 text-xs hover:bg-gray-100"

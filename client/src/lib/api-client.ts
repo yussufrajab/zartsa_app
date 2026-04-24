@@ -59,8 +59,16 @@ class ApiClient {
     return this.request<T>(path, { method: 'PUT', body: JSON.stringify(body) });
   }
 
-  async delete<T>(path: string): Promise<T> {
-    return this.request<T>(path, { method: 'DELETE' });
+  async patch<T>(path: string, body?: unknown): Promise<T> {
+    const options: RequestInit = { method: 'PATCH' };
+    if (body !== undefined) {
+      options.body = JSON.stringify(body);
+    }
+    return this.request<T>(path, options);
+  }
+
+  async delete<T>(path: string, options?: RequestInit): Promise<T> {
+    return this.request<T>(path, { method: 'DELETE', ...options });
   }
 }
 
