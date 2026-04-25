@@ -19,6 +19,7 @@ export const createComplaintSchema = z.object({
   contactPhone: z.string().optional(),
 });
 
+// RECEIVED is omitted — officers can only advance status, not revert to initial
 export const updateStatusSchema = z.object({
   status: z.enum(['UNDER_REVIEW', 'ESCALATED', 'RESOLVED', 'CLOSED']),
   resolution: z.string().max(2000).optional(),
@@ -30,3 +31,4 @@ export const assignComplaintSchema = z.object({
 
 export type CreateComplaintInput = z.infer<typeof createComplaintSchema>;
 export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
+export type AssignComplaintInput = z.infer<typeof assignComplaintSchema>;
