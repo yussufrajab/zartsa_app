@@ -254,18 +254,31 @@ start_postgres() {
 }
 
 stop_postgres() {
+    if ! is_postgres_running; then
+        log_info "postgresql: not running"
+        return 0
+    fi
+    # Graceful shutdown via pg_ctlcluster
+    if command -v pg_ctlcluster &>/dev/null; then
+        pg_ctlcluster 16 main stop 2>/dev/null || pg_ctlcluster 15 main stop 2>/dev/null || pg_ctlcluster 14 main stop 2>/dev/null || true
+    elif command -v service &>/dev/null; then
+        service postgresql stop 2>/dev/null || true
+    fi
+    # Wait for port to free
+    for i in $(seq 1 5); do
+        if ! is_postgres_running; then
+            log_success "postgresql: stopped"
+            return 0
+        fi
+        sleep 1
+    done
+    # Force kill if still running
     local pid
     pid=$(port_pid "$POSTGRES_PORT")
     if [ -n "$pid" ]; then
-        # Try graceful shutdown via pg_ctl
-        if command -v pg_ctlcluster &>/dev/null; then
-            pg_ctlcluster 16 main stop 2>/dev/null || pg_ctlcluster 15 main stop 2>/dev/null || pg_ctlcluster 14 main stop 2>/dev/null || true
-        fi
         kill "$pid" 2>/dev/null
-        log_success "postgresql: stopped"
-    else
-        log_info "postgresql: not running"
     fi
+    log_success "postgresql: stopped"
 }
 
 is_postgres_running() {
