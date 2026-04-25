@@ -40,9 +40,8 @@ DB_USER="postgres"
 DB_PASS="postgres"
 
 # =============================================================================
-# INFRASTRUCTURE SERVICES (systemd)
+# INFRASTRUCTURE SERVICES (managed directly, no sudo)
 # =============================================================================
-INFRA_SERVICES=("postgresql" "redis-server" "minio")
 
 # =============================================================================
 # COLORS
@@ -194,81 +193,83 @@ mode_label() {
 }
 
 # =============================================================================
-# INFRASTRUCTURE (systemd services)
+# INFRASTRUCTURE (direct process management — no sudo needed)
 # =============================================================================
 
 start_infra() {
     log_info "Starting infrastructure services [$(mode_label)]..."
     local failures=0
 
-    for svc in "${INFRA_SERVICES[@]}"; do
-        if systemctl is-active --quiet "$svc" 2>/dev/null; then
-            log_success "$svc: already running"
-        else
-            if sudo systemctl start "$svc" 2>/dev/null; then
-                log_success "$svc: started"
-            else
-                log_error "$svc: failed to start (not installed?)"
-                failures=$((failures + 1))
-            fi
-        fi
-    done
+    start_postgres || failures=$((failures + 1))
+    start_redis || failures=$((failures + 1))
+    start_minio || failures=$((failures + 1))
 
     return $failures
 }
 
 stop_infra() {
     log_info "Stopping infrastructure services..."
-    for svc in "${INFRA_SERVICES[@]}"; do
-        if systemctl is-active --quiet "$svc" 2>/dev/null; then
-            sudo systemctl stop "$svc" 2>/dev/null && log_success "$svc: stopped" || log_error "$svc: stop failed"
-        else
-            log_info "$svc: not running"
-        fi
-    done
+    stop_postgres
+    stop_redis
+    stop_minio
 }
 
 restart_infra() {
     log_info "Restarting infrastructure services..."
-    for svc in "${INFRA_SERVICES[@]}"; do
-        if systemctl is-active --quiet "$svc" 2>/dev/null; then
-            sudo systemctl restart "$svc" 2>/dev/null && log_success "$svc: restarted" || log_error "$svc: restart failed"
-        else
-            sudo systemctl start "$svc" 2>/dev/null && log_success "$svc: started" || log_error "$svc: start failed"
-        fi
-    done
-}
-
-# Individual infrastructure service control
-start_infra_service() {
-    local svc=$1
-    if systemctl is-active --quiet "$svc" 2>/dev/null; then
-        log_success "$svc: already running"
-    else
-        sudo systemctl start "$svc" 2>/dev/null && log_success "$svc: started" || log_error "$svc: failed to start"
-    fi
-}
-
-stop_infra_service() {
-    local svc=$1
-    if systemctl is-active --quiet "$svc" 2>/dev/null; then
-        sudo systemctl stop "$svc" 2>/dev/null && log_success "$svc: stopped" || log_error "$svc: stop failed"
-    else
-        log_info "$svc: not running"
-    fi
+    stop_infra
+    sleep 1
+    start_infra
 }
 
 # =============================================================================
 # POSTGRESQL
 # =============================================================================
 
-start_postgres() { start_infra_service "postgresql"; }
-stop_postgres()  { stop_infra_service "postgresql"; }
+start_postgres() {
+    if is_postgres_running; then
+        log_success "postgresql: already running"
+        return 0
+    fi
+    # Try systemctl first (Linux with systemd), fall back to direct start
+    if command -v systemctl &>/dev/null && systemctl is-active --quiet "postgresql" 2>/dev/null; then
+        log_success "postgresql: already running (systemd)"
+        return 0
+    fi
+    # Try starting via pg_ctl or service command (no sudo)
+    if command -v pg_ctlcluster &>/dev/null; then
+        pg_ctlcluster 16 main start 2>/dev/null || pg_ctlcluster 15 main start 2>/dev/null || pg_ctlcluster 14 main start 2>/dev/null
+    elif command -v service &>/dev/null; then
+        service postgresql start 2>/dev/null
+    fi
+    # Wait and check
+    for i in $(seq 1 10); do
+        if is_postgres_running; then
+            log_success "postgresql: started"
+            return 0
+        fi
+        sleep 1
+    done
+    log_error "postgresql: failed to start"
+    return 1
+}
+
+stop_postgres() {
+    local pid
+    pid=$(port_pid "$POSTGRES_PORT")
+    if [ -n "$pid" ]; then
+        # Try graceful shutdown via pg_ctl
+        if command -v pg_ctlcluster &>/dev/null; then
+            pg_ctlcluster 16 main stop 2>/dev/null || pg_ctlcluster 15 main stop 2>/dev/null || pg_ctlcluster 14 main stop 2>/dev/null || true
+        fi
+        kill "$pid" 2>/dev/null
+        log_success "postgresql: stopped"
+    else
+        log_info "postgresql: not running"
+    fi
+}
 
 is_postgres_running() {
-    systemctl is-active --quiet "postgresql" 2>/dev/null && return 0
-    port_is_open "$POSTGRES_PORT" && return 0
-    return 1
+    port_is_open "$POSTGRES_PORT"
 }
 
 check_database() {
@@ -283,13 +284,47 @@ check_database() {
 # REDIS
 # =============================================================================
 
-start_redis() { start_infra_service "redis-server"; }
-stop_redis()  { stop_infra_service "redis-server"; }
+start_redis() {
+    if is_redis_running; then
+        log_success "redis: already running"
+        return 0
+    fi
+    # Try systemctl first (no sudo), fall back to direct start
+    if command -v systemctl &>/dev/null && systemctl is-active --quiet "redis-server" 2>/dev/null; then
+        log_success "redis: already running (systemd)"
+        return 0
+    fi
+    # Start redis-server directly
+    redis-server --daemonize yes 2>/dev/null
+    for i in $(seq 1 5); do
+        if is_redis_running; then
+            log_success "redis: started"
+            return 0
+        fi
+        sleep 1
+    done
+    log_error "redis: failed to start"
+    return 1
+}
+
+stop_redis() {
+    if command -v redis-cli &>/dev/null; then
+        redis-cli shutdown 2>/dev/null
+        log_success "redis: stopped"
+    else
+        local pid
+        pid=$(port_pid "$REDIS_PORT")
+        if [ -n "$pid" ]; then
+            kill "$pid" 2>/dev/null
+            log_success "redis: stopped"
+        else
+            log_info "redis: not running"
+        fi
+    fi
+}
 
 is_redis_running() {
-    systemctl is-active --quiet "redis-server" 2>/dev/null && return 0
-    port_is_open "$REDIS_PORT" && return 0
-    return 1
+    port_is_open "$REDIS_PORT"
 }
 
 # =============================================================================
@@ -684,15 +719,25 @@ show_logs() {
             ;;
         postgres|postgresql)
             log_info "PostgreSQL logs (last $lines lines):"
-            sudo journalctl -u postgresql -n "$lines" --no-pager 2>/dev/null || log_error "Could not read PostgreSQL logs"
+            if [ -f /var/log/postgresql/postgresql-16-main.log ]; then
+                tail -n "$lines" /var/log/postgresql/postgresql-16-main.log 2>/dev/null
+            elif [ -f /var/log/postgresql/postgresql-15-main.log ]; then
+                tail -n "$lines" /var/log/postgresql/postgresql-15-main.log 2>/dev/null
+            else
+                journalctl -u postgresql -n "$lines" --no-pager 2>/dev/null || log_error "Could not read PostgreSQL logs"
+            fi
             ;;
         redis)
             log_info "Redis logs (last $lines lines):"
-            sudo journalctl -u redis-server -n "$lines" --no-pager 2>/dev/null || log_error "Could not read Redis logs"
+            if [ -f /var/log/redis/redis-server.log ]; then
+                tail -n "$lines" /var/log/redis/redis-server.log 2>/dev/null
+            else
+                journalctl -u redis-server -n "$lines" --no-pager 2>/dev/null || log_error "Could not read Redis logs"
+            fi
             ;;
         minio)
             log_info "MinIO logs (last $lines lines):"
-            sudo journalctl -u minio -n "$lines" --no-pager 2>/dev/null || log_error "Could not read MinIO logs"
+            tail -n "$lines" /tmp/minio.log 2>/dev/null || log_error "Could not read MinIO logs (check /tmp/minio.log)"
             ;;
         all|"")
             for svc_label in "API server:$API_LOG" "Frontend:$FRONTEND_LOG" "Prisma Studio:$PRISMA_STUDIO_LOG"; do
