@@ -7,6 +7,7 @@ import { newsRoutes } from './news.routes';
 import { usersRoutes } from './users.routes';
 import { trackingRoutes } from './tracking.routes';
 import { lostFoundRoutes } from './lost-found.routes';
+import { complaintsRoutes } from './complaints.routes';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/news', newsRoutes);
 router.use('/users', usersRoutes);
 router.use('/tracking', trackingRoutes);
 router.use('/lost-found', lostFoundRoutes);
+router.use('/complaints', complaintsRoutes);
 
 export const routes = router;
