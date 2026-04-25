@@ -241,6 +241,42 @@
       "operating_without_license": "Operating without license"
     }
   },
+  "fines": {
+    "title": "Traffic Fines",
+    "byLicense": "By license",
+    "byPlate": "By plate number",
+    "licensePlaceholder": "Enter license number",
+    "platePlaceholder": "Enter plate number",
+    "noFines": "No fines found",
+    "notFound": "Fine not found",
+    "backToList": "Back to list",
+    "offenseType": "Offense type",
+    "location": "Location",
+    "offenseDate": "Offense date",
+    "controlNumber": "Control number",
+    "payNow": "Pay now",
+    "dispute": "Dispute fine",
+    "selectPaymentMethod": "Select payment method",
+    "confirmPayment": "Confirm payment",
+    "paymentSuccessful": "Payment successful!",
+    "transactionRef": "Transaction reference",
+    "amount": "Amount",
+    "method": "Method",
+    "status": {
+      "outstanding": "Outstanding",
+      "paid": "Paid",
+      "disputed": "Disputed",
+      "waived": "Waived"
+    },
+    "paymentMethods": {
+      "mpesa": "M-Pesa (Vodacom)",
+      "airtel_money": "Airtel Money",
+      "zantel": "Zantel",
+      "visa": "Visa",
+      "mastercard": "Mastercard",
+      "bank_transfer": "Bank Transfer"
+    }
+  },
   "lostFound": {
     "title": "Lost & Found",
     "reportLost": "Report Lost Item",

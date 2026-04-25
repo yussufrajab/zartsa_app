@@ -241,6 +241,42 @@
       "operating_without_license": "Kuendesha bila leseni"
     }
   },
+  "fines": {
+    "title": "Faini za Trafiki",
+    "byLicense": "Kwa leseni",
+    "byPlate": "Kwa namba ya gari",
+    "licensePlaceholder": "Ingiza namba ya leseni",
+    "platePlaceholder": "Ingiza namba ya gari",
+    "noFines": "Hakuna faini",
+    "notFound": "Faini haipatikani",
+    "backToList": "Rudi kwenye orodha",
+    "offenseType": "Aina ya kosa",
+    "location": "Mahali",
+    "offenseDate": "Tarehe ya kosa",
+    "controlNumber": "Namba ya udhibiti",
+    "payNow": "Lipa sasa",
+    "dispute": "Tutakia faini",
+    "selectPaymentMethod": "Chagua njia ya malipo",
+    "confirmPayment": "Thibitisha malipo",
+    "paymentSuccessful": "Malipo yamefanikiwa!",
+    "transactionRef": "Namba ya muamala",
+    "amount": "Kiasi",
+    "method": "Njia",
+    "status": {
+      "outstanding": "Haijalipwa",
+      "paid": "Imelipwa",
+      "disputed": "Inatutakiwa",
+      "waived": "Imesamehewa"
+    },
+    "paymentMethods": {
+      "mpesa": "M-Pesa (Vodacom)",
+      "airtel_money": "Airtel Money",
+      "zantel": "Zantel",
+      "visa": "Visa",
+      "mastercard": "Mastercard",
+      "bank_transfer": "Hambe ya benki"
+    }
+  },
   "lostFound": {
     "title": "Potee & Patikana",
     "reportLost": "Ripoti Kipotee",
