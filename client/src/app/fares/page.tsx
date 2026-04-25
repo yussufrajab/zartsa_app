@@ -6,8 +6,13 @@ import { api } from '@/lib/api-client';
 import { formatTZS, formatDate } from '@/lib/utils';
 import { DALADALA_DEPARTURES, SHAMBA_DEPARTURES, DALADALA_DESTINATIONS, SHAMBA_DESTINATIONS } from '@zartsa/shared';
 import type { RouteType, FareSearchResult } from '@zartsa/shared';
-import { ArrowLeft, Search } from 'lucide-react';
-import Link from 'next/link';
+import { Search } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export default function FaresPage() {
   const { t, i18n } = useTranslation();
@@ -49,77 +54,79 @@ export default function FaresPage() {
   const lang = i18n.language as 'sw' | 'en';
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Link href="/" className="rounded-md p-1 hover:bg-gray-100">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <h1 className="text-xl font-bold">{t('fare.title')}</h1>
-      </div>
+    <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
+      <PageHeader title={t('fare.title')} subtitle={t('app.tagline')} backHref="/" />
 
       {/* Route Type Toggle */}
-      <div className="mb-4 flex overflow-hidden rounded-lg border">
+      <div className="mb-6 flex overflow-hidden rounded-lg border border-slate-200">
         <button
           onClick={() => { setRouteType('daladala'); setDeparture(''); setDestination(''); setHasSearched(false); }}
-          className={`flex-1 py-2 text-sm font-medium transition-colors ${routeType === 'daladala' ? 'bg-zartsa-green text-white' : 'bg-white text-gray-700'}`}
+          className={cn('flex-1 py-2.5 text-sm font-medium transition-all', routeType === 'daladala' ? 'bg-primary text-white' : 'bg-white text-slate-600 hover:bg-slate-50')}
         >
           {t('fare.daladala')}
         </button>
         <button
           onClick={() => { setRouteType('shamba'); setDeparture(''); setDestination(''); setHasSearched(false); }}
-          className={`flex-1 py-2 text-sm font-medium transition-colors ${routeType === 'shamba' ? 'bg-zartsa-green text-white' : 'bg-white text-gray-700'}`}
+          className={cn('flex-1 py-2.5 text-sm font-medium transition-all', routeType === 'shamba' ? 'bg-primary text-white' : 'bg-white text-slate-600 hover:bg-slate-50')}
         >
           {t('fare.shamba')}
         </button>
       </div>
 
       {/* Search Form */}
-      <div className="mb-6 space-y-3">
-        <div>
-          <label className="mb-1 block text-sm font-medium">{t('fare.from')}</label>
-          <select value={departure} onChange={(e) => { setDeparture(e.target.value); setDestination(''); }}
-            className="w-full rounded-md border px-3 py-2 text-sm">
-            <option value="">{t('fare.from')}</option>
-            {departures.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
+      <Card size="default" className="mb-6">
+        <div className="space-y-4 md:flex md:items-end md:gap-4 md:space-y-0">
+          <div className="flex-1">
+            <Select label={t('fare.from')} value={departure}
+              onChange={(e) => { setDeparture(e.target.value); setDestination(''); }}
+              options={departures.map((d) => ({ value: d, label: d }))}
+              placeholder={t('fare.from')} />
+          </div>
+          <div className="flex-1">
+            <Select label={t('fare.to')} value={destination}
+              onChange={(e) => setDestination(e.target.value)} disabled={!departure}
+              options={destinations.map((d) => ({ value: d, label: d }))}
+              placeholder={t('fare.to')} />
+          </div>
+          <Button onClick={handleSearch} loading={isSearching} disabled={!departure || !destination}
+            className="w-full md:w-auto">
+            <Search className="h-4 w-4" />
+            {t('fare.search')}
+          </Button>
         </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">{t('fare.to')}</label>
-          <select value={destination} onChange={(e) => setDestination(e.target.value)} disabled={!departure}
-            className="w-full rounded-md border px-3 py-2 text-sm disabled:opacity-50">
-            <option value="">{t('fare.to')}</option>
-            {destinations.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-        </div>
-        <button onClick={handleSearch} disabled={isSearching || !departure || !destination}
-          className="flex w-full items-center justify-center gap-2 rounded-md bg-zartsa-green px-4 py-2 text-sm text-white disabled:opacity-50">
-          <Search className="h-4 w-4" />
-          {t('fare.search')}
-        </button>
-      </div>
+      </Card>
 
       {/* Search Results */}
       {hasSearched && (
-        <div className="mb-6">
-          <h2 className="mb-2 text-sm font-semibold">{t('fare.searchResults')}</h2>
+        <div className="mb-8">
+          <h2 className="mb-3 text-sm font-semibold text-slate-700">{t('fare.searchResults')}</h2>
           {isSearching ? (
-            <p className="text-sm text-gray-500">{t('common.loading')}</p>
-          ) : results.length === 0 ? (
-            <p className="text-sm text-gray-500">{t('common.noResults')}</p>
-          ) : (
             <div className="space-y-2">
+              <div className="h-16 rounded-xl skeleton-shimmer" />
+              <div className="h-16 rounded-xl skeleton-shimmer" />
+            </div>
+          ) : results.length === 0 ? (
+            <Card variant="gradient" accentColor="red" size="compact">
+              <p className="text-sm text-slate-500">{t('common.noResults')}</p>
+            </Card>
+          ) : (
+            <div className="space-y-3">
               {results.map((f, i) => (
-                <div key={i} className="rounded-lg border p-3">
-                  <p className="font-medium">{f.departure} &rarr; {f.destination}</p>
-                  <div className="mt-1 space-y-0.5 text-sm text-gray-600">
-                    <p>{t('fare.baseFare')}: {formatAmount(f.baseFare)}</p>
-                    <p>{t('fare.surcharge')}: {formatAmount(f.surcharge)}</p>
-                    <p className="font-semibold text-zartsa-green">{t('fare.total')}: {formatAmount(f.totalFare)}</p>
+                <Card key={i} variant="gradient" accentColor="gold" size="compact">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium text-slate-900">{f.departure} &rarr; {f.destination}</p>
+                      <div className="mt-1 space-y-0.5 text-sm text-slate-500">
+                        <p>{t('fare.baseFare')}: {formatAmount(f.baseFare)}</p>
+                        <p>{t('fare.surcharge')}: {formatAmount(f.surcharge)}</p>
+                      </div>
+                    </div>
+                    <Badge variant="gold">{formatAmount(f.totalFare)}</Badge>
                   </div>
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-2 text-xs text-slate-400">
                     {t('fare.effectiveDate')}: {formatDate(f.effectiveDate, lang)}
                   </p>
-                </div>
+                </Card>
               ))}
             </div>
           )}
@@ -128,30 +135,34 @@ export default function FaresPage() {
 
       {/* All Fares Table */}
       <div>
-        <h2 className="mb-2 text-sm font-semibold">{routeType === 'daladala' ? t('fare.daladala') : t('fare.shamba')} &mdash; {t('fare.allFares')}</h2>
+        <h2 className="mb-3 text-sm font-semibold text-slate-700">
+          {routeType === 'daladala' ? t('fare.daladala') : t('fare.shamba')} &mdash; {t('fare.allFares')}
+        </h2>
         {allFares.length === 0 ? (
-          <p className="text-sm text-gray-500">{t('common.loading')}</p>
+          <div className="h-32 rounded-xl skeleton-shimmer" />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-xs text-gray-500">
-                  <th className="pb-1 pr-2">{t('fare.from')}</th>
-                  <th className="pb-1 pr-2">{t('fare.to')}</th>
-                  <th className="pb-1 pr-2 text-right">{t('fare.total')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allFares.map((f, i) => (
-                  <tr key={i} className="border-b">
-                    <td className="py-1.5 pr-2">{f.departure}</td>
-                    <td className="py-1.5 pr-2">{f.destination}</td>
-                    <td className="py-1.5 pr-2 text-right font-medium">{formatAmount(f.totalFare)}</td>
+          <Card size="compact">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
+                    <th className="pb-2 pr-2 font-medium">{t('fare.from')}</th>
+                    <th className="pb-2 pr-2 font-medium">{t('fare.to')}</th>
+                    <th className="pb-2 pr-2 text-right font-medium">{t('fare.total')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {allFares.map((f, i) => (
+                    <tr key={i} className="border-b border-slate-100 last:border-0">
+                      <td className="py-2 pr-2 text-slate-700">{f.departure}</td>
+                      <td className="py-2 pr-2 text-slate-700">{f.destination}</td>
+                      <td className="py-2 text-right font-medium text-primary">{formatAmount(f.totalFare)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         )}
       </div>
     </div>

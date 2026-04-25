@@ -2,43 +2,43 @@
 
 import { useTranslation } from 'react-i18next';
 import { useNotifications } from '@/components/providers/NotificationProvider';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ListSkeleton } from '@/components/ui/skeleton';
 
 export default function NotificationsPage() {
   const { t } = useTranslation();
   const { notifications, isLoading, markAllAsRead } = useNotifications();
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
-      <div className="mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Link href="/" className="rounded-md p-1 hover:bg-gray-100">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <h1 className="text-xl font-bold">{t('notifications.title')}</h1>
-        </div>
-        {notifications.some((n) => !n.isRead) && (
-          <button onClick={markAllAsRead} className="text-xs text-zartsa-green hover:underline">
+    <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
+      <PageHeader title={t('notifications.title')} backHref="/" action={
+        notifications.some((n) => !n.isRead) ? (
+          <Button variant="ghost" size="sm" onClick={markAllAsRead}>
             {t('notifications.markAllRead')}
-          </button>
-        )}
-      </div>
+          </Button>
+        ) : undefined
+      } />
 
       {isLoading ? (
-        <p className="text-sm text-gray-500">{t('common.loading')}</p>
+        <ListSkeleton count={4} />
       ) : notifications.length === 0 ? (
-        <p className="text-sm text-gray-500">{t('notifications.empty')}</p>
+        <p className="text-sm text-slate-500">{t('notifications.empty')}</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {notifications.map((n) => (
-            <div key={n.id} className={`rounded-lg border p-3 ${!n.isRead ? 'border-blue-200 bg-blue-50' : 'bg-white'}`}>
-              <p className="font-medium">{n.title}</p>
-              <p className="text-sm text-gray-600">{n.message}</p>
-              <p className="mt-1 text-xs text-gray-400">
-                {new Date(n.createdAt).toLocaleString()}
-              </p>
-            </div>
+            <Card key={n.id} variant="gradient" accentColor={!n.isRead ? 'green' : undefined} size="compact"
+              className={!n.isRead ? 'border-l-2 border-l-primary' : ''}>
+              <div className="flex items-start gap-3">
+                {!n.isRead && <div className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />}
+                <div className={!n.isRead ? '' : 'ml-5'}>
+                  <p className="text-sm font-medium text-slate-900">{n.title}</p>
+                  <p className="mt-0.5 text-sm text-slate-500">{n.message}</p>
+                  <p className="mt-1 text-xs text-slate-400">{new Date(n.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+            </Card>
           ))}
         </div>
       )}

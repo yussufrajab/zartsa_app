@@ -4,6 +4,8 @@ import { AuthProvider } from '@/components/providers/AuthProvider';
 import { NotificationProvider } from '@/components/providers/NotificationProvider';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { Sidebar } from '@/components/layout/sidebar';
+import { Toaster } from 'sonner';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -14,13 +16,17 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="sw" suppressHydrationWarning>
-      <body className="flex min-h-screen flex-col bg-white antialiased">
+      <body className="flex min-h-screen flex-col bg-slate-50 antialiased">
         <I18nProvider>
           <AuthProvider>
             <NotificationProvider>
-              <Header />
-              <main className="flex-1">{children}</main>
-              <Footer />
+              <Sidebar />
+              <div className="flex flex-1 flex-col lg:ml-64">
+                <Header />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
+              <Toaster position="bottom-right" toastOptions={{ className: 'font-sans' }} />
             </NotificationProvider>
           </AuthProvider>
         </I18nProvider>

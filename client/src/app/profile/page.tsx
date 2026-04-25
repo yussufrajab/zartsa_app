@@ -9,6 +9,8 @@ import { SavedRoutes } from './saved-routes';
 import { DashboardTabs } from './dashboard-tabs';
 import { DeleteAccount } from './delete-account';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { PageHeader } from '@/components/ui/page-header';
+import { ListSkeleton } from '@/components/ui/skeleton';
 
 interface SavedRouteData {
   id: string; userId: string; departure: string; destination: string; label: string;
@@ -69,23 +71,25 @@ export default function ProfilePage() {
 
   if (authLoading || loading) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-6">
-        <p className="text-sm text-gray-500">{t('common.loading')}</p>
+      <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
+        <PageHeader title={t('profile.title')} backHref="/" />
+        <ListSkeleton count={4} />
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-6">
-        <p className="text-sm text-gray-500">{t('common.error')}</p>
+      <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
+        <PageHeader title={t('profile.title')} backHref="/" />
+        <p className="text-sm text-slate-500">{t('common.error')}</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-4 px-4 py-6">
-      <h1 className="text-xl font-bold">{t('profile.title')}</h1>
+    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6 lg:px-6">
+      <PageHeader title={t('profile.title')} backHref="/" />
 
       <ProfileForm profile={profile} onUpdated={handleProfileUpdated} />
 

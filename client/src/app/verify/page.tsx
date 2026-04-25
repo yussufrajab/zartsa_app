@@ -7,14 +7,20 @@ import { SmartPlateInput } from '@/components/SmartPlateInput';
 import { formatDate } from '@/lib/utils';
 import type { DocumentType, VerificationResult } from '@zartsa/shared';
 import { DOCUMENT_TYPES } from '@zartsa/shared';
-import { ArrowLeft, Search, Shield, AlertCircle, CheckCircle } from 'lucide-react';
-import Link from 'next/link';
+import { Shield, AlertCircle, CheckCircle } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Select } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
-const STATUS_COLORS: Record<string, string> = {
-  Valid: 'bg-green-100 text-green-800',
-  Expired: 'bg-red-100 text-red-800',
-  Suspended: 'bg-yellow-100 text-yellow-800',
-  Invalid: 'bg-red-100 text-red-800',
+const STATUS_VARIANT: Record<string, 'success' | 'error' | 'warning' | 'neutral'> = {
+  Valid: 'success',
+  Expired: 'error',
+  Suspended: 'warning',
+  Invalid: 'error',
 };
 
 const STATUS_ICONS: Record<string, typeof CheckCircle> = {
@@ -29,19 +35,17 @@ export default function VerifyPage() {
   const [documentType, setDocumentType] = useState<DocumentType>('driving_license');
   const [number, setNumber] = useState('');
   const [result, setResult] = useState<VerificationResult | null>(null);
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleVerify = async () => {
     if (!number) return;
     setIsLoading(true);
     setResult(null);
-    setError('');
     try {
       const res = await api.post<{ data: VerificationResult }>('/verify', { documentType, number });
       setResult(res.data);
     } catch (err: any) {
-      setError(err?.message || t('verify.notFound'));
+      toast.error(err?.message || t('verify.notFound'));
     } finally {
       setIsLoading(false);
     }
@@ -50,93 +54,59 @@ export default function VerifyPage() {
   const StatusIcon = result ? (STATUS_ICONS[result.status] || AlertCircle) : AlertCircle;
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Link href="/" className="rounded-md p-1 hover:bg-gray-100">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <h1 className="text-xl font-bold">{t('verify.title')}</h1>
-      </div>
+    <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
+      <PageHeader title={t('verify.title')} subtitle={t('app.tagline')} backHref="/" action={
+        <Shield className="h-6 w-6 text-primary" />
+      } />
 
-      {/* Document Type Selector */}
-      <div className="mb-4">
-        <label className="mb-1 block text-sm font-medium">{t('verify.documentType')}</label>
-        <select value={documentType} onChange={(e) => { setDocumentType(e.target.value as DocumentType); setNumber(''); setResult(null); }}
-          className="w-full rounded-md border px-3 py-2 text-sm">
-          {DOCUMENT_TYPES.map((dt) => (
-            <option key={dt} value={dt}>{t(`verify.types.${dt}`)}</option>
-          ))}
-        </select>
-      </div>
+      <Card size="default" className="mb-6">
+        <div className="space-y-4">
+          <Select label={t('verify.documentType')} value={documentType}
+            onChange={(e) => { setDocumentType(e.target.value as DocumentType); setNumber(''); setResult(null); }}
+            options={DOCUMENT_TYPES.map((dt) => ({ value: dt, label: t(`verify.types.${dt}`) }))}
+            placeholder={t('verify.documentType')} />
 
-      {/* Number Input */}
-      <div className="mb-4">
-        {['road_license', 'commercial_vehicle_license', 'vehicle_visitor_permit'].includes(documentType) ? (
-          <SmartPlateInput value={number} onChange={setNumber} label={t('verify.plateNumber')} />
-        ) : (
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              {documentType === 'driver_conductor_badge' ? t('verify.badgeNumber') : t('verify.licenseNumber')}
-            </label>
-            <input type="text" value={number} onChange={(e) => setNumber(e.target.value.toUpperCase())}
-              placeholder={t('verify.numberPlaceholder')} maxLength={50}
-              className="w-full rounded-md border px-3 py-2 text-sm uppercase" />
-          </div>
-        )}
-      </div>
+          {['road_license', 'commercial_vehicle_license', 'vehicle_visitor_permit'].includes(documentType) ? (
+            <SmartPlateInput value={number} onChange={setNumber} label={t('verify.plateNumber')} />
+          ) : (
+            <Input label={documentType === 'driver_conductor_badge' ? t('verify.badgeNumber') : t('verify.licenseNumber')}
+              value={number} onChange={(e) => setNumber(e.target.value.toUpperCase())}
+              placeholder={t('verify.numberPlaceholder')} />
+          )}
 
-      {/* Verify Button */}
-      <button onClick={handleVerify} disabled={isLoading || !number}
-        className="flex w-full items-center justify-center gap-2 rounded-md bg-zartsa-green px-4 py-2 text-sm text-white disabled:opacity-50">
-        <Search className="h-4 w-4" />
-        {isLoading ? t('common.loading') : t('verify.verify')}
-      </button>
-
-      {/* Result */}
-      {error && (
-        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-            <p className="text-sm font-medium text-red-700">{error}</p>
-          </div>
+          <Button className="w-full" size="lg" onClick={handleVerify} loading={isLoading} disabled={!number}>
+            {t('verify.verify')}
+          </Button>
         </div>
-      )}
+      </Card>
 
       {result && (
-        <div className="mt-4 rounded-lg border p-4">
-          <div className="mb-3 flex items-center justify-between">
+        <Card variant="gradient" accentColor={STATUS_VARIANT[result.status] === 'success' ? 'green' : 'red'} size="spacious">
+          <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <StatusIcon className="h-5 w-5" />
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[result.status] || 'bg-gray-100 text-gray-800'}`}>
+              <Badge variant={STATUS_VARIANT[result.status] || 'neutral'}>
                 {t(`verify.${result.status.toLowerCase()}`)}
-              </span>
+              </Badge>
             </div>
-            <Shield className="h-5 w-5 text-zartsa-green" />
+            <Shield className="h-5 w-5 text-primary" />
           </div>
 
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">{t('verify.documentType')}</span>
-              <span className="font-medium">{t(`verify.types.${result.documentType}`)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">{t('verify.holderName')}</span>
-              <span className="font-medium">{result.holderName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">{t('verify.documentNumber')}</span>
-              <span className="font-medium">{result.documentNumber}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">{t('verify.issueDate')}</span>
-              <span className="font-medium">{formatDate(result.issueDate, i18n.language as 'sw' | 'en')}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">{t('verify.expiryDate')}</span>
-              <span className="font-medium">{formatDate(result.expiryDate, i18n.language as 'sw' | 'en')}</span>
-            </div>
+          <div className="space-y-3 text-sm">
+            {[
+              { label: t('verify.documentType'), value: t(`verify.types.${result.documentType}`) },
+              { label: t('verify.holderName'), value: result.holderName },
+              { label: t('verify.documentNumber'), value: result.documentNumber },
+              { label: t('verify.issueDate'), value: formatDate(result.issueDate, i18n.language as 'sw' | 'en') },
+              { label: t('verify.expiryDate'), value: formatDate(result.expiryDate, i18n.language as 'sw' | 'en') },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex justify-between border-b border-slate-100 pb-2 last:border-0">
+                <span className="text-slate-500">{label}</span>
+                <span className="font-medium text-slate-900">{value}</span>
+              </div>
+            ))}
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

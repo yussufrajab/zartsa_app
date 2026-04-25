@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api-client';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 import type { NotificationType } from '@zartsa/shared';
-import { NOTIFICATION_TYPES, DEFAULT_NOTIFICATION_PREFS } from '@zartsa/shared';
+import { NOTIFICATION_TYPES } from '@zartsa/shared';
+import { PageHeader } from '@/components/ui/page-header';
+import { Card } from '@/components/ui/card';
+import { Toggle } from '@/components/ui/toggle';
+import { ListSkeleton } from '@/components/ui/skeleton';
 
 interface PrefRow {
   type: NotificationType;
@@ -45,39 +47,31 @@ export default function NotificationPreferencesPage() {
     }
   };
 
-  if (isLoading) return <p className="p-4 text-sm text-gray-500">{t('common.loading')}</p>;
+  if (isLoading) return <ListSkeleton count={5} />;
 
   const channelLabels = { inApp: t('notifications.channels.inApp'), sms: t('notifications.channels.sms'), email: t('notifications.channels.email') };
   const channels: ('inApp' | 'sms' | 'email')[] = ['inApp', 'sms', 'email'];
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Link href="/notifications" className="rounded-md p-1 hover:bg-gray-100">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <h1 className="text-xl font-bold">{t('notifications.preferences')}</h1>
-      </div>
+    <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
+      <PageHeader title={t('notifications.preferences')} backHref="/notifications" />
 
       <div className="space-y-3">
         {prefs.map((pref) => (
-          <div key={pref.type} className="rounded-lg border p-3">
-            <p className="mb-2 text-sm font-medium">{t(`notifications.types.${pref.type}`)}</p>
-            <div className="flex gap-4">
+          <Card key={pref.type} size="compact">
+            <p className="mb-3 text-sm font-medium text-slate-900">{t(`notifications.types.${pref.type}`)}</p>
+            <div className="flex gap-6">
               {channels.map((ch) => (
-                <label key={ch} className="flex items-center gap-1 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={pref[ch]}
-                    onChange={() => togglePref(pref.type, ch)}
-                    disabled={saving === pref.type}
-                    className="h-3.5 w-3.5"
-                  />
-                  {channelLabels[ch]}
-                </label>
+                <Toggle
+                  key={ch}
+                  checked={pref[ch]}
+                  onChange={(val) => togglePref(pref.type, ch)}
+                  label={channelLabels[ch]}
+                  disabled={saving === pref.type}
+                />
               ))}
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

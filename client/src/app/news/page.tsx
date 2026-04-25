@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api-client';
 import { NewsCard } from '@/components/NewsCard';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 import type { AnnouncementCategory } from '@zartsa/shared';
 import { CATEGORIES } from '@zartsa/shared';
+import { PageHeader } from '@/components/ui/page-header';
+import { Badge } from '@/components/ui/badge';
+import { ListSkeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface Announcement {
   id: string;
@@ -36,34 +38,30 @@ export default function NewsPage() {
   }, [category]);
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Link href="/" className="rounded-md p-1 hover:bg-gray-100">
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <h1 className="text-xl font-bold">{t('news.title')}</h1>
-      </div>
+    <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
+      <PageHeader title={t('news.title')} backHref="/" />
 
-      {/* Category Filter */}
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap gap-2">
         <button onClick={() => setCategory('')}
-          className={`rounded-full px-3 py-1 text-xs font-medium ${!category ? 'bg-zartsa-green text-white' : 'bg-gray-100 text-gray-700'}`}>
+          className={cn('rounded-full px-3 py-1 text-xs font-semibold transition-colors',
+            !category ? 'bg-zartsa-gold text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>
           {t('news.allCategories')}
         </button>
         {CATEGORIES.map((cat) => (
           <button key={cat} onClick={() => setCategory(cat)}
-            className={`rounded-full px-3 py-1 text-xs font-medium ${category === cat ? 'bg-zartsa-green text-white' : 'bg-gray-100 text-gray-700'}`}>
+            className={cn('rounded-full px-3 py-1 text-xs font-semibold transition-colors',
+              category === cat ? 'bg-zartsa-gold text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>
             {t(`news.categories.${cat}`)}
           </button>
         ))}
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-gray-500">{t('common.loading')}</p>
+        <ListSkeleton count={4} />
       ) : announcements.length === 0 ? (
-        <p className="text-sm text-gray-500">{t('common.noResults')}</p>
+        <p className="text-sm text-slate-500">{t('common.noResults')}</p>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
           {announcements.map((a) => (
             <NewsCard key={a.id} {...a} />
           ))}
