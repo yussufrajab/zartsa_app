@@ -19,3 +19,5 @@ export * from './constants/notification-types';
 export * from './constants/fare-routes';
 export * from './types/complaint';
 export * from './schemas/complaint.schema';
+export * from './types/fine';
+export * from './schemas/fine.schema';
