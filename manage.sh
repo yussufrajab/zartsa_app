@@ -296,13 +296,49 @@ is_redis_running() {
 # MINIO
 # =============================================================================
 
-start_minio() { start_infra_service "minio"; }
-stop_minio()  { stop_infra_service "minio"; }
+MINIO_DATA_DIR="${MINIO_DATA_DIR:-$HOME/.minio-data}"
+MINIO_ACCESS_KEY="${MINIO_ACCESS_KEY:-minioadmin}"
+MINIO_SECRET_KEY="${MINIO_SECRET_KEY:-minioadmin}"
+
+start_minio() {
+    if is_minio_running; then
+        log_success "minio: already running"
+        return 0
+    fi
+    mkdir -p "$MINIO_DATA_DIR"
+    MINIO_ROOT_USER="$MINIO_ACCESS_KEY" MINIO_ROOT_PASSWORD="$MINIO_SECRET_KEY" nohup minio server "$MINIO_DATA_DIR" --address ":$MINIO_PORT" --console-address ":$((MINIO_PORT + 1))" > /tmp/minio.log 2>&1 &
+    local pid=$!
+    # Wait for MinIO to be ready
+    for i in $(seq 1 15); do
+        if port_is_open "$MINIO_PORT"; then
+            # Ensure bucket exists
+            sleep 1
+            if command -v mc &>/dev/null; then
+                mc alias set local "http://localhost:$MINIO_PORT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" --quiet 2>/dev/null
+                mc mb "local/zartsa" --quiet 2>/dev/null || true
+            fi
+            log_success "minio: started (PID $pid)"
+            return 0
+        fi
+        sleep 1
+    done
+    log_error "minio: failed to start"
+    return 1
+}
+
+stop_minio() {
+    local pid
+    pid=$(port_pid "$MINIO_PORT")
+    if [ -n "$pid" ]; then
+        kill "$pid" 2>/dev/null
+        log_success "minio: stopped"
+    else
+        log_info "minio: not running"
+    fi
+}
 
 is_minio_running() {
-    systemctl is-active --quiet "minio" 2>/dev/null && return 0
-    port_is_open "$MINIO_PORT" && return 0
-    return 1
+    port_is_open "$MINIO_PORT"
 }
 
 # =============================================================================
