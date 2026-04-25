@@ -17,3 +17,5 @@ export * from './schemas/lost-found.schema';
 export * from './constants/roles';
 export * from './constants/notification-types';
 export * from './constants/fare-routes';
+export * from './types/complaint';
+export * from './schemas/complaint.schema';
