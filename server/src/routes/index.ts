@@ -8,6 +8,7 @@ import { usersRoutes } from './users.routes';
 import { trackingRoutes } from './tracking.routes';
 import { lostFoundRoutes } from './lost-found.routes';
 import { complaintsRoutes } from './complaints.routes';
+import { finesRoutes } from './fines.routes';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/users', usersRoutes);
 router.use('/tracking', trackingRoutes);
 router.use('/lost-found', lostFoundRoutes);
 router.use('/complaints', complaintsRoutes);
+router.use('/fines', finesRoutes);
 
 export const routes = router;
