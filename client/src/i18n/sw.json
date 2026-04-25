@@ -307,6 +307,7 @@
     "myBookings": "Tiketi zangu",
     "active": "Hai",
     "cancelled": "Imeghairiwa",
+    "used": "Imetumika",
     "expired": "Imeisha muda",
     "route": "Njia",
     "totalAmount": "Jumla",

@@ -307,6 +307,7 @@
     "myBookings": "My Bookings",
     "active": "Active",
     "cancelled": "Cancelled",
+    "used": "Used",
     "expired": "Expired",
     "route": "Route",
     "totalAmount": "Total",
