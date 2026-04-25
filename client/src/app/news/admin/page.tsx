@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { Plus, Eye, EyeOff } from 'lucide-react';
+import { Plus, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import type { AnnouncementCategory } from '@zartsa/shared';
 import { CATEGORIES } from '@zartsa/shared';
@@ -69,6 +69,14 @@ export default function NewsAdminPage() {
       await api.post(`/news/${id}/unpublish`, {});
       loadAnnouncements();
     } catch { alert('Failed to unpublish'); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm(t('news.confirmDelete') || 'Are you sure you want to delete this announcement?')) return;
+    try {
+      await api.delete(`/news/${id}`);
+      loadAnnouncements();
+    } catch { alert('Failed to delete'); }
   };
 
   if (isLoading) return <p className="p-4 text-sm text-[#637885]">{t('common.loading')}</p>;
@@ -135,6 +143,9 @@ export default function NewsAdminPage() {
                   <Eye className="h-4 w-4" />
                 </button>
               )}
+              <button onClick={() => handleDelete(a.id)} className="rounded-xl p-2 text-[#d4322c] hover:bg-[#fce8e7] transition-colors" title={t('common.delete') || 'Delete'}>
+                <Trash2 className="h-4 w-4" />
+              </button>
             </div>
           </div>
         ))}

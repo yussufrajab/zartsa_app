@@ -19,6 +19,7 @@ function SeatSelectionContent() {
   const destination = searchParams.get('destination') || '';
   const date = searchParams.get('date') || '';
   const passengers = Number(searchParams.get('passengers') || 1);
+  const totalFare = Number(searchParams.get('totalFare') || 0);
 
   const [seatLayout, setSeatLayout] = useState<SeatLayout | null>(null);
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
@@ -69,6 +70,7 @@ function SeatSelectionContent() {
       date,
       passengers: String(passengers),
       seats: selectedSeats.join(','),
+      totalFare: String(totalFare),
     });
     router.push(`/tickets/checkout?${params}`);
   };

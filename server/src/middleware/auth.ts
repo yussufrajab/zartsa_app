@@ -30,7 +30,8 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
 
 export function authorize(...roles: UserRole[]) {
   return (req: Request, _res: Response, next: NextFunction) => {
-    if (!req.userRole || !roles.includes(req.userRole)) {
+    const userRole = req.userRole?.toLowerCase() as UserRole | undefined;
+    if (!userRole || !roles.includes(userRole)) {
       return next(new ForbiddenError('Insufficient permissions'));
     }
     next();

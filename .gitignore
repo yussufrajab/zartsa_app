@@ -8,3 +8,6 @@ dist/
 coverage/
 .turbo/
 **/src/generated/
+client/next-env.d.ts
+client/tsconfig.tsbuildinfo
+*.Zone.Identifier

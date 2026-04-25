@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { validate } from '../middleware/validate';
 import { otpRequestSchema, loginSchema, registerSchema } from '@zartsa/shared';
-import { requestOtp, login, register } from '../services/auth.service';
+import { requestOtp, login, register, refreshToken } from '../services/auth.service';
 import { rateLimit } from '../middleware/rateLimit';
 import { authenticate } from '../middleware/auth';
 import { getAuthUser } from '../services/auth.service';
@@ -48,3 +48,14 @@ authRoutes.get('/me',
     } catch (err) { next(err); }
   }
 );
+
+authRoutes.post('/refresh', async (req, res, next) => {
+  try {
+    const { refreshToken: token } = req.body;
+    if (!token) {
+      return res.status(400).json({ status: 'error', message: 'Refresh token required' });
+    }
+    const tokens = await refreshToken(token);
+    res.json({ status: 'ok', data: tokens });
+  } catch (err) { next(err); }
+});

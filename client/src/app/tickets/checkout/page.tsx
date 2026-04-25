@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
 const MOBILE_METHODS: PaymentMethod[] = ['mpesa', 'airtel_money', 'zantel'];
-const MOCK_FARE_PER_PASSENGER = 2500;
 
 function CheckoutContent() {
   const { t, i18n } = useTranslation();
@@ -25,6 +24,7 @@ function CheckoutContent() {
   const date = searchParams.get('date') || '';
   const passengers = Number(searchParams.get('passengers') || 1);
   const seats = searchParams.get('seats') || '';
+  const totalFare = Number(searchParams.get('totalFare') || 0);
 
   const seatNumbers = seats ? seats.split(',') : [];
 
@@ -34,7 +34,7 @@ function CheckoutContent() {
   const [error, setError] = useState('');
 
   const locale = i18n.language === 'sw' ? 'sw' : 'en';
-  const totalAmount = MOCK_FARE_PER_PASSENGER * passengers;
+  const totalAmount = totalFare * passengers;
 
   const handleSubmit = async () => {
     setError('');

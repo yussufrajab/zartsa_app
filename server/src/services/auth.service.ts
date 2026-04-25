@@ -116,6 +116,24 @@ export async function verifyAccessToken(token: string): Promise<{ userId: string
   }
 }
 
+export async function refreshToken(refreshToken: string): Promise<AuthTokens> {
+  try {
+    const { payload } = await jwtVerify(refreshToken, secret);
+    if (payload.type !== 'refresh') {
+      throw new UnauthorizedError('Invalid refresh token');
+    }
+    const userId = payload.userId as string;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedError('User not found or inactive');
+    }
+    return generateTokens(user.id, user.role);
+  } catch (err) {
+    if (err instanceof UnauthorizedError) throw err;
+    throw new UnauthorizedError('Invalid or expired refresh token');
+  }
+}
+
 export async function getAuthUser(userId: string): Promise<AuthUser> {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new UnauthorizedError('User not found');

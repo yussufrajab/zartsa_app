@@ -95,6 +95,7 @@ export default function TicketsPage() {
       destination: result.destination,
       date: new Date(date).toISOString(),
       passengers,
+      totalFare: String(result.totalFare),
     });
     router.push(`/tickets/seats?${params}`);
   };

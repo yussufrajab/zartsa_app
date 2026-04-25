@@ -76,16 +76,7 @@ export default function TrackComplaintPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const statusLabel = (status: ComplaintStatus) => {
-    const labels: Record<ComplaintStatus, string> = {
-      RECEIVED: 'Received',
-      UNDER_REVIEW: 'Under Review',
-      ESCALATED: 'Escalated',
-      RESOLVED: 'Resolved',
-      CLOSED: 'Closed',
-    };
-    return labels[status] || status;
-  };
+  const statusLabel = (status: ComplaintStatus) => t(`complaints.statuses.${status}`);
 
   return (
     <div className="mx-auto max-w-lg px-4 py-6 lg:px-6">

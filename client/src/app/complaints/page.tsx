@@ -82,7 +82,7 @@ export default function ComplaintsPage() {
         formData.append('attachments', file);
       });
 
-      const res = await api.post<{ data: { referenceNumber: string } }>('/complaints', Object.fromEntries(formData));
+      const res = await api.upload<{ data: { referenceNumber: string } }>('/complaints', formData);
       setSubmittedRef(res.data.referenceNumber);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t('common.error');

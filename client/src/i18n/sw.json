@@ -30,7 +30,8 @@
     "back": "Rudi",
     "noResults": "Hakuna matokeo",
     "success": "Imefanikiwa",
-    "required": "Hili linahitajika"
+    "required": "Hili linahitajika",
+    "delete": "Futa"
   },
   "auth": {
     "phone": "Namba ya simu",
@@ -160,7 +161,8 @@
     "titleSwPlaceholder": "Kichwa (Kiswahili)",
     "titleEnPlaceholder": "Title (English)",
     "contentSwPlaceholder": "Maudhui (Kiswahili)",
-    "contentEnPlaceholder": "Content (English)"
+    "contentEnPlaceholder": "Content (English)",
+    "confirmDelete": "Je, una uhakika unataka kufuta tangazo hili?"
   },
   "profile": {
     "title": "Wasifu Wangu",
@@ -239,6 +241,13 @@
       "poor_vehicle_condition": "Hali mbaya ya gari",
       "route_cutting": "Kukata njia",
       "operating_without_license": "Kuendesha bila leseni"
+    },
+    "statuses": {
+      "RECEIVED": "Imepokelewa",
+      "UNDER_REVIEW": "Inachunguzwa",
+      "ESCALATED": "Imepandishwa",
+      "RESOLVED": "Imesuluhishwa",
+      "CLOSED": "Imefungwa"
     }
   },
   "fines": {

@@ -36,17 +36,6 @@ const statusVariant: Record<ComplaintStatus, 'info' | 'warning' | 'gold' | 'succ
   CLOSED: 'neutral',
 };
 
-const statusLabel = (status: ComplaintStatus): string => {
-  const labels: Record<ComplaintStatus, string> = {
-    RECEIVED: 'Received',
-    UNDER_REVIEW: 'Under Review',
-    ESCALATED: 'Escalated',
-    RESOLVED: 'Resolved',
-    CLOSED: 'Closed',
-  };
-  return labels[status] || status;
-};
-
 export default function MyComplaintsPage() {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
@@ -97,7 +86,7 @@ export default function MyComplaintsPage() {
                           {c.referenceNumber}
                         </p>
                         <Badge variant={statusVariant[c.status]}>
-                          {statusLabel(c.status)}
+                          {t(`complaints.statuses.${c.status}`)}
                         </Badge>
                       </div>
                       <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-[#637885]">
