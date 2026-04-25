@@ -21,3 +21,5 @@ export * from './types/complaint';
 export * from './schemas/complaint.schema';
 export * from './types/fine';
 export * from './schemas/fine.schema';
+export * from './types/booking';
+export * from './schemas/booking.schema';
