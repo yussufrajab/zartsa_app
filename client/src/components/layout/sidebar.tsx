@@ -26,13 +26,13 @@ export function Sidebar() {
   const { isAuthenticated } = useAuth();
 
   return (
-    <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:border-r lg:border-slate-200 lg:bg-slate-50">
-      <div className="flex h-16 items-center gap-2 border-b border-slate-200 px-6">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold">
+    <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:border-r lg:border-[#eaeef0] lg:bg-white">
+      <div className="flex h-16 items-center gap-2.5 border-b border-[#eaeef0] px-6">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#12a07a] to-[#0a7c5c] text-sm font-bold text-white shadow-md ring-1 ring-white/20 ring-inset">
             Z
           </div>
-          <span className="text-lg font-bold text-primary">ZARTSA</span>
+          <span className="font-display text-lg font-bold tracking-tight text-[#0d1820]">ZARTSA<span className="text-[#0a7c5c]">.</span></span>
         </Link>
       </div>
 
@@ -45,10 +45,10 @@ export function Sidebar() {
                 <Link
                   href={href}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150',
                     isActive
-                      ? 'bg-primary/10 text-primary border-l-2 border-primary'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                      ? 'bg-gradient-to-r from-[#e6f4ef] to-[#e6f4ef]/40 text-[#0a7c5c] font-semibold relative after:absolute after:right-0 after:top-2 after:bottom-2 after:w-[3px] after:rounded-full after:bg-[#0a7c5c]'
+                      : 'text-[#637885] hover:bg-[#f5f9f7] hover:text-[#2e3f4c]'
                   )}
                 >
                   <Icon className="h-5 w-5" />
@@ -61,11 +61,11 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      <div className="border-t border-slate-200 p-4">
+      <div className="border-t border-[#eaeef0] p-4">
         {!isAuthenticated && (
           <Link
             href="/login"
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100"
+            className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-[#637885] transition-colors hover:bg-[#e6f4ef] hover:text-[#0a7c5c]"
           >
             <LogIn className="h-5 w-5" />
             Sign In

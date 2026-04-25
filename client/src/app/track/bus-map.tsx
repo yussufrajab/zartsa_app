@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer } from 'react-leaflet';
+import { Map as LeafletMap, TileLayer, Marker, divIcon } from 'leaflet';
 import { io, Socket } from 'socket.io-client';
 import { api } from '@/lib/api-client';
-import { BusMarker } from './bus-marker';
 import type { BusPosition, TrackingFilter } from '@zartsa/shared';
+import 'leaflet/dist/leaflet.css';
 
 interface BusMapProps {
   filter: TrackingFilter;
@@ -17,12 +17,113 @@ const ZANZIBAR_CENTER: [number, number] = [-6.1659, 39.1989];
 const DEFAULT_ZOOM = 12;
 const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
+function createBusIcon(position: BusPosition) {
+  const color = position.isStale ? '#637785' : position.serviceType === 'daladala' ? '#0a7c5c' : '#1a5f8a';
+  const borderColor = position.isStale ? '#8a9baa' : 'white';
+  return divIcon({
+    className: 'custom-bus-icon',
+    html: `<div style="
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: bold; color: white;
+      background: ${color}; border: 2px solid ${borderColor};
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      opacity: ${position.isStale ? '0.6' : '1'};
+    ">${position.serviceType === 'daladala' ? 'D' : 'S'}</div>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+  });
+}
+
 export function BusMap({ filter, onPositionsUpdate }: BusMapProps) {
-  const { t } = useTranslation();
-  const [positions, setPositions] = useState<BusPosition[]>([]);
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language === 'sw' ? 'sw' : 'en';
+  const mapRef = useRef<LeafletMap | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const markersRef = useRef<globalThis.Map<string, Marker>>(new globalThis.Map());
+  const [positions, setPosition] = useState<BusPosition[]>([]);
   const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
 
+  // Initialize Leaflet map imperatively
+  const initMap = useCallback(() => {
+    if (!containerRef.current || mapRef.current) return;
+
+    const map = new LeafletMap(containerRef.current, {
+      center: ZANZIBAR_CENTER,
+      zoom: DEFAULT_ZOOM,
+      scrollWheelZoom: true,
+      zoomControl: true,
+    });
+
+    new TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+
+    mapRef.current = map;
+  }, []);
+
+  // Sync bus markers with the map
+  const syncMarkers = useCallback((buses: BusPosition[]) => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const currentIds = new Set(buses.map((b) => b.vehiclePlate));
+
+    // Remove markers for buses no longer in the list
+    for (const [plate, marker] of markersRef.current) {
+      if (!currentIds.has(plate)) {
+        map.removeLayer(marker);
+        markersRef.current.delete(plate);
+      }
+    }
+
+    // Add or update markers
+    for (const pos of buses) {
+      const latLng: [number, number] = [pos.latitude, pos.longitude];
+      const existing = markersRef.current.get(pos.vehiclePlate);
+
+      if (existing) {
+        existing.setLatLng(latLng);
+        existing.setIcon(createBusIcon(pos));
+      } else {
+        const recordedTime = new Date(pos.recordedAt);
+        const timeStr = recordedTime.toLocaleTimeString(lang === 'sw' ? 'sw-TZ' : 'en-TZ', {
+          hour: '2-digit', minute: '2-digit',
+        });
+        const marker = new Marker(latLng, { icon: createBusIcon(pos) })
+          .addTo(map)
+          .bindTooltip(
+            `<div style="font-size:12px">
+              <b>${pos.vehiclePlate}</b><br/>
+              ${pos.route}<br/>
+              ${pos.serviceType === 'daladala' ? t('fare.daladala') : t('fare.shamba')}<br/>
+              ${pos.speed !== null ? `${Math.round(pos.speed)} km/h<br/>` : ''}
+              <span style="color:${pos.isStale ? '#637785' : '#0a7c5c'}">
+                ${pos.isStale ? `${t('track.lastSeen')}: ${timeStr}` : `${t('track.liveMap')}: ${timeStr}`}
+              </span>
+            </div>`
+          );
+        markersRef.current.set(pos.vehiclePlate, marker);
+      }
+    }
+  }, [t, lang]);
+
+  // Create map on mount, destroy on unmount
+  useEffect(() => {
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(initMap, 0);
+    return () => {
+      clearTimeout(timer);
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+      markersRef.current.clear();
+    };
+  }, [initMap]);
+
+  // Fetch bus positions
   useEffect(() => {
     async function fetchPositions() {
       try {
@@ -34,7 +135,7 @@ export function BusMap({ filter, onPositionsUpdate }: BusMapProps) {
         const response = await api.get<{ status: string; data: BusPosition[] }>(
           `/tracking/buses?${params.toString()}`
         );
-        setPositions(response.data);
+        setPosition(response.data);
       } catch {
         // Will show empty map
       } finally {
@@ -44,6 +145,7 @@ export function BusMap({ filter, onPositionsUpdate }: BusMapProps) {
     fetchPositions();
   }, [filter]);
 
+  // Socket.IO for real-time updates
   useEffect(() => {
     const socketIo = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
@@ -57,7 +159,7 @@ export function BusMap({ filter, onPositionsUpdate }: BusMapProps) {
     });
 
     socketIo.on('bus:update', (update: BusPosition) => {
-      setPositions((prev) => {
+      setPosition((prev) => {
         const index = prev.findIndex((p) => p.vehiclePlate === update.vehiclePlate);
         if (index >= 0) {
           const updated = [...prev];
@@ -83,6 +185,7 @@ export function BusMap({ filter, onPositionsUpdate }: BusMapProps) {
     };
   }, []);
 
+  // Socket subscriptions
   useEffect(() => {
     if (!socket || !socket.connected) return;
 
@@ -98,49 +201,42 @@ export function BusMap({ filter, onPositionsUpdate }: BusMapProps) {
         socket.emit('unsubscribe:route', filter.route);
       }
       if (filter.operatorId) {
-        socket.emit('unsubscribe:operator', filter.operatorId);
+        socket.emit('subscribe:operator', filter.operatorId);
       }
     };
   }, [socket, filter]);
 
+  // Sync positions with parent
   useEffect(() => {
     onPositionsUpdate?.(positions);
   }, [positions, onPositionsUpdate]);
+
+  // Sync markers with map when positions change
+  useEffect(() => {
+    syncMarkers(positions);
+  }, [positions, syncMarkers]);
 
   const activeBuses = positions.filter((p) => !p.isStale);
   const staleBuses = positions.filter((p) => p.isStale);
 
   if (loading) {
     return (
-      <div className="flex h-96 items-center justify-center rounded-lg border bg-gray-50">
-        <p className="text-sm text-gray-500">{t('common.loading')}</p>
+      <div className="flex h-96 items-center justify-center rounded-3xl border border-[#d4dadf] bg-[#f5f9f7]">
+        <p className="text-sm text-[#637785]">{t('common.loading')}</p>
       </div>
     );
   }
 
   return (
     <div className="relative">
-      <div className="absolute left-2 top-2 z-[1000] rounded-md bg-white/90 px-2 py-1 text-xs shadow">
-        <span className="inline-block h-3 w-3 rounded-full bg-zartsa-green" /> {t('fare.daladala')} ({activeBuses.filter((b) => b.serviceType === 'daladala').length})
+      <div className="absolute left-2 top-2 z-[1000] rounded-xl bg-white/90 backdrop-blur-md px-3 py-1.5 text-xs shadow-md border border-[#d4dadf]/50">
+        <span className="inline-block h-3 w-3 rounded-full bg-[#0a7c5c]" /> {t('fare.daladala')} ({activeBuses.filter((b) => b.serviceType === 'daladala').length})
         {' '}
-        <span className="ml-1 inline-block h-3 w-3 rounded-full bg-zartsa-blue" /> {t('fare.shamba')} ({activeBuses.filter((b) => b.serviceType === 'shamba').length})
+        <span className="ml-1 inline-block h-3 w-3 rounded-full bg-[#1a5f8a]" /> {t('fare.shamba')} ({activeBuses.filter((b) => b.serviceType === 'shamba').length})
         {' '}
-        <span className="ml-1 inline-block h-3 w-3 rounded-full bg-gray-400" /> {t('track.lastSeen')} ({staleBuses.length})
+        <span className="ml-1 inline-block h-3 w-3 rounded-full bg-[#637785]/40" /> {t('track.lastSeen')} ({staleBuses.length})
       </div>
-      <MapContainer
-        center={ZANZIBAR_CENTER}
-        zoom={DEFAULT_ZOOM}
-        className="h-96 w-full rounded-lg"
-        scrollWheelZoom={true}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {positions.map((pos) => (
-          <BusMarker key={pos.vehiclePlate} position={pos} />
-        ))}
-      </MapContainer>
+      <div ref={containerRef} className="h-96 w-full rounded-3xl" />
     </div>
   );
 }

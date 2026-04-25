@@ -5,10 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 import { ITEM_CATEGORIES } from '@zartsa/shared';
 import type { ItemCategory } from '@zartsa/shared';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default function ReportFoundPage() {
   const { t } = useTranslation();
@@ -56,11 +55,8 @@ export default function ReportFoundPage() {
   const update = (field: string, value: string) => setForm(f => ({ ...f, [field]: value }));
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Link href="/lost-found" className="rounded-md p-1 hover:bg-gray-100"><ArrowLeft className="h-5 w-5" /></Link>
-        <h1 className="text-xl font-bold">{t('lostFound.reportFound')}</h1>
-      </div>
+    <div className="mx-auto max-w-lg px-4 py-6 lg:px-6">
+      <PageHeader title={t('lostFound.reportFound')} backHref="/lost-found" />
       {error && <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
@@ -89,7 +85,7 @@ export default function ReportFoundPage() {
           <label className="mb-1 block text-sm font-medium">{t('lostFound.photo')}</label>
           <input type="file" ref={fileRef} accept="image/jpeg,image/png,image/webp" onChange={(e) => setPhoto(e.target.files?.[0] || null)} className="w-full text-sm" />
         </div>
-        <button type="submit" disabled={isSubmitting} className="w-full rounded-md bg-zartsa-green px-4 py-2 text-sm text-white disabled:opacity-50">
+        <button type="submit" disabled={isSubmitting} className="w-full rounded-md bg-[#0a7c5c] px-4 py-2 text-sm text-white disabled:opacity-50">
           {isSubmitting ? t('common.loading') : t('lostFound.submitReport')}
         </button>
       </form>

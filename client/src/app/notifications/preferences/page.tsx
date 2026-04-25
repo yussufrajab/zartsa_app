@@ -6,7 +6,6 @@ import { api } from '@/lib/api-client';
 import type { NotificationType } from '@zartsa/shared';
 import { NOTIFICATION_TYPES } from '@zartsa/shared';
 import { PageHeader } from '@/components/ui/page-header';
-import { Card } from '@/components/ui/card';
 import { Toggle } from '@/components/ui/toggle';
 import { ListSkeleton } from '@/components/ui/skeleton';
 
@@ -58,8 +57,8 @@ export default function NotificationPreferencesPage() {
 
       <div className="space-y-3">
         {prefs.map((pref) => (
-          <Card key={pref.type} size="compact">
-            <p className="mb-3 text-sm font-medium text-slate-900">{t(`notifications.types.${pref.type}`)}</p>
+          <div key={pref.type} className="rounded-2xl border border-[#d4dadf] bg-white p-4">
+            <p className="mb-3 text-sm font-medium text-[#0d1820]">{t(`notifications.types.${pref.type}`)}</p>
             <div className="flex gap-6">
               {channels.map((ch) => (
                 <Toggle
@@ -71,7 +70,7 @@ export default function NotificationPreferencesPage() {
                 />
               ))}
             </div>
-          </Card>
+          </div>
         ))}
       </div>
     </div>

@@ -3,18 +3,18 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const cardVariants = cva(
-  'rounded-xl border border-slate-200 bg-white text-slate-900 transition-all duration-200',
+  'bg-white rounded-2xl border border-[#d4dadf]/60 transition-all duration-300',
   {
     variants: {
       variant: {
         default: 'shadow-card',
-        interactive: 'shadow-card hover:shadow-card-hover hover:scale-[1.02] cursor-pointer',
+        interactive: 'shadow-card hover:shadow-card-hover hover:-translate-y-1 hover:border-[#0a7c5c]/20 cursor-pointer',
         gradient: 'shadow-card overflow-hidden',
       },
       size: {
-        compact: 'p-3',
-        default: 'p-4',
-        spacious: 'p-6',
+        compact: 'p-4',
+        default: 'p-5',
+        spacious: 'p-7',
       },
     },
     defaultVariants: {
@@ -40,11 +40,11 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       {accentColor && variant === 'gradient' && (
         <div
           className={cn(
-            'h-1 w-full',
-            accentColor === 'green' && 'bg-primary',
-            accentColor === 'gold' && 'bg-zartsa-gold',
-            accentColor === 'blue' && 'bg-zartsa-blue',
-            accentColor === 'red' && 'bg-red-500'
+            'h-[3px] w-full',
+            accentColor === 'green' && 'bg-gradient-to-r from-[#0a7c5c] to-[#12a07a]',
+            accentColor === 'gold' && 'bg-gradient-to-r from-[#c8730a] to-[#f0a23a]',
+            accentColor === 'blue' && 'bg-gradient-to-r from-[#1a5f8a] to-[#2d7ab0]',
+            accentColor === 'red' && 'bg-gradient-to-r from-[#d4322c] to-[#e8433d]'
           )}
         />
       )}
@@ -63,14 +63,14 @@ CardHeader.displayName = 'CardHeader';
 
 const CardTitle = forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3 ref={ref} className={cn('text-base font-semibold text-slate-900', className)} {...props} />
+    <h3 ref={ref} className={cn('text-base font-semibold leading-snug text-[#0d1820]', className)} {...props} />
   )
 );
 CardTitle.displayName = 'CardTitle';
 
 const CardDescription = forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => (
-    <p ref={ref} className={cn('text-sm text-slate-500', className)} {...props} />
+    <p ref={ref} className={cn('text-sm text-[#637885] leading-relaxed', className)} {...props} />
   )
 );
 CardDescription.displayName = 'CardDescription';

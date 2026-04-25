@@ -100,9 +100,9 @@ export default function VerifyPage() {
               { label: t('verify.issueDate'), value: formatDate(result.issueDate, i18n.language as 'sw' | 'en') },
               { label: t('verify.expiryDate'), value: formatDate(result.expiryDate, i18n.language as 'sw' | 'en') },
             ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between border-b border-slate-100 pb-2 last:border-0">
-                <span className="text-slate-500">{label}</span>
-                <span className="font-medium text-slate-900">{value}</span>
+              <div key={label} className="flex justify-between border-b border-[#eaeef0] pb-2 last:border-0">
+                <span className="text-[#637885]">{label}</span>
+                <span className="font-medium text-[#0d1820]">{value}</span>
               </div>
             ))}
           </div>

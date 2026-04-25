@@ -43,14 +43,14 @@ export default function NewsPage() {
 
       <div className="mb-6 flex flex-wrap gap-2">
         <button onClick={() => setCategory('')}
-          className={cn('rounded-full px-3 py-1 text-xs font-semibold transition-colors',
-            !category ? 'bg-zartsa-gold text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>
+          className={cn('rounded-xl px-4 py-2 text-sm font-semibold transition-colors',
+            !category ? 'bg-[#0a7c5c] text-white' : 'text-[#637885] hover:text-[#2e3f4c] hover:bg-[#e6f4ef]')}>
           {t('news.allCategories')}
         </button>
         {CATEGORIES.map((cat) => (
           <button key={cat} onClick={() => setCategory(cat)}
-            className={cn('rounded-full px-3 py-1 text-xs font-semibold transition-colors',
-              category === cat ? 'bg-zartsa-gold text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>
+            className={cn('rounded-xl px-4 py-2 text-sm font-semibold transition-colors',
+              category === cat ? 'bg-[#0a7c5c] text-white' : 'text-[#637885] hover:text-[#2e3f4c] hover:bg-[#e6f4ef]')}>
             {t(`news.categories.${cat}`)}
           </button>
         ))}
@@ -59,7 +59,7 @@ export default function NewsPage() {
       {isLoading ? (
         <ListSkeleton count={4} />
       ) : announcements.length === 0 ? (
-        <p className="text-sm text-slate-500">{t('common.noResults')}</p>
+        <p className="text-sm text-[#637885]">{t('common.noResults')}</p>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
           {announcements.map((a) => (

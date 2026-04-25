@@ -82,17 +82,17 @@ export default function LostFoundPage() {
       </Card>
 
       {isLoading ? <ListSkeleton count={4} /> :
-       items.length === 0 ? <p className="text-sm text-slate-500">{t('common.noResults')}</p> :
+       items.length === 0 ? <p className="text-sm text-[#637885]">{t('common.noResults')}</p> :
        <div className="grid gap-3 md:grid-cols-2">
          {items.map(item => (
            <Link key={item.id} href={`/lost-found/item/${item.id}`}>
              <Card variant="interactive" size="compact">
                <div className="flex items-center justify-between">
                  <Badge variant="success">{item.category}</Badge>
-                 <span className="text-xs text-slate-400">{new Date(item.foundDate).toLocaleDateString()}</span>
+                 <span className="text-xs text-[#8a9baa]">{new Date(item.foundDate).toLocaleDateString()}</span>
                </div>
-               <p className="mt-2 text-sm text-slate-700 line-clamp-2">{item.description.slice(0, 100)}</p>
-               <p className="mt-1 text-xs text-slate-500">{t('lostFound.route')}: {item.route} &middot; {t('lostFound.bus')}: {item.busNumber}</p>
+               <p className="mt-2 text-sm text-[#2e3f4c] line-clamp-2">{item.description.slice(0, 100)}</p>
+               <p className="mt-1 text-xs text-[#637885]">{t('lostFound.route')}: {item.route} &middot; {t('lostFound.bus')}: {item.busNumber}</p>
              </Card>
            </Link>
          ))}

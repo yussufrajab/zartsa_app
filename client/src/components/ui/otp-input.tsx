@@ -66,18 +66,18 @@ export function OtpInput({ length = 6, onComplete, disabled, error }: OtpInputPr
             onPaste={index === 0 ? handlePaste : undefined}
             disabled={disabled}
             className={cn(
-              'h-12 w-12 rounded-lg border-2 text-center text-lg font-bold transition-all',
-              'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
+              'h-14 w-12 rounded-xl border-2 text-center text-xl font-bold text-[#0d1820] transition-all duration-200',
+              'focus:outline-none focus:border-[#0a7c5c] focus:ring-3 focus:ring-[#0a7c5c]/15 focus:bg-white',
               error
-                ? 'border-red-500'
+                ? 'border-[#d4322c]'
                 : value
-                  ? 'border-primary bg-primary/5'
-                  : 'border-slate-200 hover:border-slate-300'
+                  ? 'border-[#0a7c5c] bg-white shadow-[0_0_0_3px_rgba(10,124,92,0.12)]'
+                  : 'border-[#d4dadf] bg-[#f5f9f7] hover:border-[#b0bcc5]'
             )}
           />
         ))}
       </div>
-      {error && <p className="text-center text-xs text-red-600">{error}</p>}
+      {error && <p className="text-center text-xs text-[#d4322c]">{error}</p>}
     </div>
   );
 }

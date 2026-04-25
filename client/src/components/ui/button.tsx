@@ -3,20 +3,25 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
+  'inline-flex items-center justify-center gap-2 font-semibold tracking-wide transition-all duration-200 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#0a7c5c]/30 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97]',
   {
     variants: {
       variant: {
-        primary: 'bg-primary text-primary-foreground shadow-sm hover:opacity-90',
-        gold: 'bg-zartsa-gold text-white shadow-sm hover:opacity-90',
-        outline: 'border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-white',
-        ghost: 'text-primary hover:bg-primary/10',
-        danger: 'bg-red-600 text-white shadow-sm hover:bg-red-700',
+        primary:
+          'bg-gradient-to-b from-[#12a07a] to-[#0a7c5c] text-white shadow-md hover:shadow-lg hover:from-[#14b088] hover:to-[#0d9068] active:shadow-sm border border-[#0a7c5c]/20',
+        gold:
+          'bg-gradient-to-b from-[#f0a23a] to-[#c8730a] text-white shadow-md hover:shadow-lg hover:from-[#f5ae4d] hover:to-[#d97f12] active:shadow-sm border border-[#c8730a]/20',
+        outline:
+          'border-2 border-[#0a7c5c] text-[#0a7c5c] bg-transparent hover:bg-[#e6f4ef]',
+        ghost:
+          'text-[#0a7c5c] bg-transparent hover:bg-[#e6f4ef]',
+        danger:
+          'bg-gradient-to-b from-[#e8433d] to-[#d4322c] text-white shadow-md hover:shadow-lg active:shadow-sm border border-[#d4322c]/20',
       },
       size: {
-        sm: 'h-8 px-3 text-xs',
-        md: 'h-10 px-4 text-sm',
-        lg: 'h-12 px-6 text-base',
+        sm: 'h-8 px-4 text-xs rounded-lg',
+        md: 'h-10 px-5 text-sm rounded-xl',
+        lg: 'h-12 px-7 text-base rounded-xl',
       },
     },
     defaultVariants: {

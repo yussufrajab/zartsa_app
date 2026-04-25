@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
 import { Ticket, FileCheck, MessageSquareWarning, Scale } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface BookingHistoryItem {
   id: string; departure: string; destination: string; travelDate: string;
@@ -58,8 +59,8 @@ export function DashboardTabs() {
 
   if (loading) {
     return (
-      <div className="rounded-lg border p-4">
-        <p className="text-sm text-gray-500">{t('common.loading')}</p>
+      <div className="rounded-2xl border border-[#d4dadf] bg-white p-5">
+        <p className="text-sm text-[#637885]">{t('common.loading')}</p>
       </div>
     );
   }
@@ -67,21 +68,24 @@ export function DashboardTabs() {
   if (!history) return null;
 
   return (
-    <div className="rounded-lg border p-4">
-      <h2 className="mb-4 text-lg font-semibold">{t('profile.dashboard')}</h2>
+    <div className="rounded-2xl border border-[#d4dadf] bg-white p-5">
+      <h2 className="mb-4 font-display text-lg font-semibold text-[#0d1820]">{t('profile.dashboard')}</h2>
 
-      <div className="mb-4 flex border-b">
+      <div className="flex gap-1 p-1 rounded-2xl bg-[#eaeef0] mb-6">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const count = history[tab.key].length;
           return (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-1 border-b-2 px-3 py-2 text-sm ${
-                activeTab === tab.key ? 'border-zartsa-green font-medium text-zartsa-green' : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}>
+              className={cn(
+                'flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm transition-all',
+                activeTab === tab.key
+                  ? 'bg-white shadow-sm font-semibold text-[#0d1820]'
+                  : 'text-[#637885] hover:text-[#2e3f4c]'
+              )}>
               <Icon className="h-4 w-4" />
               {t(tab.labelKey)}
-              {count > 0 && <span className="rounded-full bg-gray-200 px-1.5 text-xs">{count}</span>}
+              {count > 0 && <span className="rounded-full bg-[#e6f4ef] px-1.5 text-xs font-semibold text-[#0a7c5c]">{count}</span>}
             </button>
           );
         })}
@@ -89,20 +93,20 @@ export function DashboardTabs() {
 
       {activeTab === 'bookings' && (
         history.bookings.length === 0 ? (
-          <p className="text-sm text-gray-500">{t('profile.noBookings')}</p>
+          <p className="text-sm text-[#637885]">{t('profile.noBookings')}</p>
         ) : (
           <div className="space-y-2">
             {history.bookings.map((b) => (
-              <div key={b.id} className="rounded-md border p-3">
+              <div key={b.id} className="rounded-xl border border-[#d4dadf] p-3">
                 <div className="flex justify-between">
-                  <p className="text-sm font-medium">{b.departure} &rarr; {b.destination}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${
-                    b.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
-                    b.status === 'USED' ? 'bg-gray-100 text-gray-600' :
-                    b.status === 'CANCELLED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                  <p className="text-sm font-medium text-[#0d1820]">{b.departure} &rarr; {b.destination}</p>
+                  <span className={`rounded-xl px-2 py-0.5 text-xs font-semibold ${
+                    b.status === 'ACTIVE' ? 'bg-[#e6f4ef] text-[#0a7c5c]' :
+                    b.status === 'USED' ? 'bg-[#eaeef0] text-[#637885]' :
+                    b.status === 'CANCELLED' ? 'bg-red-50 text-red-700' : 'bg-[#fef3e2] text-[#c8730a]'
                   }`}>{b.status}</span>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-[#637885]">
                   {t('profile.date')}: {formatDate(b.travelDate)} | {t('profile.amount')}: {b.currency} {b.totalAmount.toLocaleString()}
                 </p>
               </div>
@@ -113,19 +117,19 @@ export function DashboardTabs() {
 
       {activeTab === 'verifications' && (
         history.verifications.length === 0 ? (
-          <p className="text-sm text-gray-500">{t('profile.noVerifications')}</p>
+          <p className="text-sm text-[#637885]">{t('profile.noVerifications')}</p>
         ) : (
           <div className="space-y-2">
             {history.verifications.map((v) => (
-              <div key={v.id} className="rounded-md border p-3">
+              <div key={v.id} className="rounded-xl border border-[#d4dadf] p-3">
                 <div className="flex justify-between">
-                  <p className="text-sm font-medium">{v.documentType}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${
-                    v.status === 'Valid' ? 'bg-green-100 text-green-700' :
-                    v.status === 'Expired' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                  <p className="text-sm font-medium text-[#0d1820]">{v.documentType}</p>
+                  <span className={`rounded-xl px-2 py-0.5 text-xs font-semibold ${
+                    v.status === 'Valid' ? 'bg-[#e6f4ef] text-[#0a7c5c]' :
+                    v.status === 'Expired' ? 'bg-red-50 text-red-700' : 'bg-[#fef3e2] text-[#c8730a]'
                   }`}>{v.status}</span>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">{v.query}</p>
+                <p className="mt-1 text-xs text-[#637885]">{v.query}</p>
               </div>
             ))}
           </div>
@@ -134,19 +138,19 @@ export function DashboardTabs() {
 
       {activeTab === 'complaints' && (
         history.complaints.length === 0 ? (
-          <p className="text-sm text-gray-500">{t('profile.noComplaints')}</p>
+          <p className="text-sm text-[#637885]">{t('profile.noComplaints')}</p>
         ) : (
           <div className="space-y-2">
             {history.complaints.map((c) => (
-              <div key={c.id} className="rounded-md border p-3">
+              <div key={c.id} className="rounded-xl border border-[#d4dadf] p-3">
                 <div className="flex justify-between">
-                  <p className="text-sm font-medium">{c.category}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${
-                    c.status === 'RESOLVED' ? 'bg-green-100 text-green-700' :
-                    c.status === 'CLOSED' ? 'bg-gray-100 text-gray-600' : 'bg-yellow-100 text-yellow-700'
+                  <p className="text-sm font-medium text-[#0d1820]">{c.category}</p>
+                  <span className={`rounded-xl px-2 py-0.5 text-xs font-semibold ${
+                    c.status === 'RESOLVED' ? 'bg-[#e6f4ef] text-[#0a7c5c]' :
+                    c.status === 'CLOSED' ? 'bg-[#eaeef0] text-[#637885]' : 'bg-[#fef3e2] text-[#c8730a]'
                   }`}>{c.status}</span>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-[#637885]">
                   {t('profile.refNumber')}: {c.referenceNumber} | {c.vehiclePlate}
                 </p>
               </div>
@@ -157,19 +161,19 @@ export function DashboardTabs() {
 
       {activeTab === 'fines' && (
         history.fines.length === 0 ? (
-          <p className="text-sm text-gray-500">{t('profile.noFines')}</p>
+          <p className="text-sm text-[#637885]">{t('profile.noFines')}</p>
         ) : (
           <div className="space-y-2">
             {history.fines.map((f) => (
-              <div key={f.id} className="rounded-md border p-3">
+              <div key={f.id} className="rounded-xl border border-[#d4dadf] p-3">
                 <div className="flex justify-between">
-                  <p className="text-sm font-medium">{f.offenseType}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-xs ${
-                    f.paymentStatus === 'PAID' ? 'bg-green-100 text-green-700' :
-                    f.paymentStatus === 'DISPUTED' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                  <p className="text-sm font-medium text-[#0d1820]">{f.offenseType}</p>
+                  <span className={`rounded-xl px-2 py-0.5 text-xs font-semibold ${
+                    f.paymentStatus === 'PAID' ? 'bg-[#e6f4ef] text-[#0a7c5c]' :
+                    f.paymentStatus === 'DISPUTED' ? 'bg-[#fef3e2] text-[#c8730a]' : 'bg-red-50 text-red-700'
                   }`}>{f.paymentStatus}</span>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-[#637885]">
                   {t('profile.amount')}: {f.currency} {f.penaltyAmount.toLocaleString()} | {t('profile.refNumber')}: {f.controlNumber}
                 </p>
               </div>

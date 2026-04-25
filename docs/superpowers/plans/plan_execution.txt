@@ -44,3 +44,9 @@
   CREATE USER yusuf WITH PASSWORD 'yourpassword';
 ALTER DATABASE zardb OWNER TO yusuf;
 GRANT ALL PRIVILEGES ON DATABASE zardb TO yusuf;
+
+
+https://github.com/yussufrajab/zartsa_app.git
+
+  GitHub username: yussufrajab
+  GitHub email: hakiba67@gmail.com

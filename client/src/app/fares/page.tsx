@@ -58,23 +58,23 @@ export default function FaresPage() {
       <PageHeader title={t('fare.title')} subtitle={t('app.tagline')} backHref="/" />
 
       {/* Route Type Toggle */}
-      <div className="mb-6 flex overflow-hidden rounded-lg border border-slate-200">
+      <div className="mb-6 flex overflow-hidden rounded-xl border border-[#d4dadf]">
         <button
           onClick={() => { setRouteType('daladala'); setDeparture(''); setDestination(''); setHasSearched(false); }}
-          className={cn('flex-1 py-2.5 text-sm font-medium transition-all', routeType === 'daladala' ? 'bg-primary text-white' : 'bg-white text-slate-600 hover:bg-slate-50')}
+          className={cn('flex-1 py-2.5 text-sm font-medium transition-all', routeType === 'daladala' ? 'bg-[#0a7c5c] text-white' : 'bg-white text-[#637785] hover:bg-[#e6f4ef]')}
         >
           {t('fare.daladala')}
         </button>
         <button
           onClick={() => { setRouteType('shamba'); setDeparture(''); setDestination(''); setHasSearched(false); }}
-          className={cn('flex-1 py-2.5 text-sm font-medium transition-all', routeType === 'shamba' ? 'bg-primary text-white' : 'bg-white text-slate-600 hover:bg-slate-50')}
+          className={cn('flex-1 py-2.5 text-sm font-medium transition-all', routeType === 'shamba' ? 'bg-[#1a5f8a] text-white' : 'bg-white text-[#637785] hover:bg-[#e6f4ef]')}
         >
           {t('fare.shamba')}
         </button>
       </div>
 
       {/* Search Form */}
-      <Card size="default" className="mb-6">
+      <div className="mb-6 bg-gradient-to-b from-[#e6f4ef] to-[#f5f9f7] rounded-2xl p-6">
         <div className="space-y-4 md:flex md:items-end md:gap-4 md:space-y-0">
           <div className="flex-1">
             <Select label={t('fare.from')} value={departure}
@@ -94,12 +94,12 @@ export default function FaresPage() {
             {t('fare.search')}
           </Button>
         </div>
-      </Card>
+      </div>
 
       {/* Search Results */}
       {hasSearched && (
         <div className="mb-8">
-          <h2 className="mb-3 text-sm font-semibold text-slate-700">{t('fare.searchResults')}</h2>
+          <h2 className="mb-3 text-sm font-semibold text-[#0d1820]">{t('fare.searchResults')}</h2>
           {isSearching ? (
             <div className="space-y-2">
               <div className="h-16 rounded-xl skeleton-shimmer" />
@@ -107,23 +107,23 @@ export default function FaresPage() {
             </div>
           ) : results.length === 0 ? (
             <Card variant="gradient" accentColor="red" size="compact">
-              <p className="text-sm text-slate-500">{t('common.noResults')}</p>
+              <p className="text-sm text-[#637785]">{t('common.noResults')}</p>
             </Card>
           ) : (
             <div className="space-y-3">
               {results.map((f, i) => (
-                <Card key={i} variant="gradient" accentColor="gold" size="compact">
+                <Card key={i} variant="gradient" accentColor="gold" size="compact" className={routeType === 'daladala' ? 'border-l-4 border-l-[#0a7c5c]' : 'border-l-4 border-l-[#1a5f8a]'}>
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-medium text-slate-900">{f.departure} &rarr; {f.destination}</p>
-                      <div className="mt-1 space-y-0.5 text-sm text-slate-500">
+                      <p className="font-medium text-[#0d1820]">{f.departure} &rarr; {f.destination}</p>
+                      <div className="mt-1 space-y-0.5 text-sm text-[#637785]">
                         <p>{t('fare.baseFare')}: {formatAmount(f.baseFare)}</p>
                         <p>{t('fare.surcharge')}: {formatAmount(f.surcharge)}</p>
                       </div>
                     </div>
-                    <Badge variant="gold">{formatAmount(f.totalFare)}</Badge>
+                    <span className="font-display text-2xl font-bold text-[#0a7c5c]">{formatAmount(f.totalFare)}</span>
                   </div>
-                  <p className="mt-2 text-xs text-slate-400">
+                  <p className="mt-2 text-xs text-[#637785]">
                     {t('fare.effectiveDate')}: {formatDate(f.effectiveDate, lang)}
                   </p>
                 </Card>
@@ -135,7 +135,7 @@ export default function FaresPage() {
 
       {/* All Fares Table */}
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-slate-700">
+        <h2 className="mb-3 text-sm font-semibold text-[#0d1820]">
           {routeType === 'daladala' ? t('fare.daladala') : t('fare.shamba')} &mdash; {t('fare.allFares')}
         </h2>
         {allFares.length === 0 ? (
@@ -145,7 +145,7 @@ export default function FaresPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
+                  <tr className="border-b border-[#d4dadf] text-left text-xs text-[#637785]">
                     <th className="pb-2 pr-2 font-medium">{t('fare.from')}</th>
                     <th className="pb-2 pr-2 font-medium">{t('fare.to')}</th>
                     <th className="pb-2 pr-2 text-right font-medium">{t('fare.total')}</th>
@@ -153,9 +153,9 @@ export default function FaresPage() {
                 </thead>
                 <tbody>
                   {allFares.map((f, i) => (
-                    <tr key={i} className="border-b border-slate-100 last:border-0">
-                      <td className="py-2 pr-2 text-slate-700">{f.departure}</td>
-                      <td className="py-2 pr-2 text-slate-700">{f.destination}</td>
+                    <tr key={i} className="border-b border-[#d4dadf]/50 last:border-0">
+                      <td className="py-2 pr-2 text-[#0d1820]">{f.departure}</td>
+                      <td className="py-2 pr-2 text-[#0d1820]">{f.destination}</td>
                       <td className="py-2 text-right font-medium text-primary">{formatAmount(f.totalFare)}</td>
                     </tr>
                   ))}

@@ -3,36 +3,80 @@
 @config "../../tailwind.config.ts";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --primary: #059669;
-  --primary-foreground: #ffffff;
-  --accent: #d97706;
-  --accent-foreground: #ffffff;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --border: #e2e8f0;
-  --ring: #059669;
-  --radius: 0.75rem;
-}
+  /* Surfaces */
+  --background:        #f5f9f7;
+  --surface:           #ffffff;
+  --surface-raised:    #fdfffe;
+  --surface-sunken:    #eef4f1;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-    --card: #1e293b;
-    --card-foreground: #f8fafc;
-    --primary: #34d399;
-    --primary-foreground: #0f172a;
-    --accent: #fbbf24;
-    --accent-foreground: #0f172a;
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
-    --border: #334155;
-    --ring: #34d399;
-  }
+  /* Brand — Ocean Emerald */
+  --primary:           #0a7c5c;
+  --primary-light:     #12a07a;
+  --primary-subtle:    #e6f4ef;
+  --primary-foreground:#ffffff;
+
+  /* Accent — Spice Amber */
+  --accent:            #c8730a;
+  --accent-light:      #f0a23a;
+  --accent-subtle:     #fef3e2;
+  --accent-foreground: #ffffff;
+
+  /* Secondary — Dhow Blue */
+  --secondary:         #1a5f8a;
+  --secondary-subtle:  #e4f0f8;
+
+  /* Neutrals — Coral Sand scale */
+  --neutral-50:        #f5f9f7;
+  --neutral-100:       #eaeef0;
+  --neutral-200:       #d4dadf;
+  --neutral-300:       #b0bcc5;
+  --neutral-400:       #8a9baa;
+  --neutral-500:       #637885;
+  --neutral-600:       #475a68;
+  --neutral-700:       #2e3f4c;
+  --neutral-800:       #1a2832;
+  --neutral-900:       #0d1820;
+
+  /* Semantic */
+  --success:           #12a07a;
+  --success-subtle:    #e6f4ef;
+  --warning:           #c8730a;
+  --warning-subtle:    #fef3e2;
+  --error:             #d4322c;
+  --error-subtle:      #fce8e7;
+  --info:              #1a5f8a;
+  --info-subtle:       #e4f0f8;
+
+  /* Typography */
+  --text-primary:      #0d1820;
+  --text-secondary:    #2e3f4c;
+  --text-muted:        #637885;
+  --text-subtle:       #8a9baa;
+  --text-inverse:      #ffffff;
+
+  /* Borders */
+  --border:            #d4dadf;
+  --border-subtle:     #eaeef0;
+  --border-strong:     #b0bcc5;
+
+  /* Effects */
+  --ring:              #0a7c5c;
+  --radius-sm:         0.5rem;
+  --radius:            0.875rem;
+  --radius-lg:         1.25rem;
+  --radius-xl:         1.75rem;
+  --radius-full:       9999px;
+
+  /* Shadows — layered, warm-tinted */
+  --shadow-xs:  0 1px 2px rgba(10, 124, 92, 0.06);
+  --shadow-sm:  0 2px 8px rgba(10, 124, 92, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md:  0 4px 16px rgba(10, 124, 92, 0.10), 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-lg:  0 8px 32px rgba(10, 124, 92, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
+  --shadow-xl:  0 16px 48px rgba(10, 124, 92, 0.14), 0 8px 16px rgba(0, 0, 0, 0.08);
+
+  /* Card shadows */
+  --shadow-card:       0 2px 8px rgba(10, 124, 92, 0.07), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 12px 32px rgba(10, 124, 92, 0.14), 0 4px 8px rgba(0, 0, 0, 0.06);
 }
 
 * {
@@ -40,9 +84,9 @@
 }
 
 body {
-  color: var(--foreground);
+  color: var(--text-primary);
   background: var(--background);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-body), 'Plus Jakarta Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -60,24 +104,38 @@ html {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #b0bcc5;
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #8a9baa;
 }
 
 .skeleton-shimmer {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, #eef4f1 25%, #d8ede5 50%, #eef4f1 75%);
   background-size: 200% 100%;
-  animation: shimmer 2s infinite linear;
+  animation: shimmer 1.8s infinite linear;
 }
 
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

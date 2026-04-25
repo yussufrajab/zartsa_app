@@ -79,21 +79,21 @@ export function DelayAlert({ positions }: DelayAlertProps) {
       ))}
 
       {staleBuses.length > 0 && (
-        <div className="flex items-start gap-2 rounded-lg border border-gray-300 bg-gray-50 p-3">
-          <Clock className="mt-0.5 h-5 w-5 shrink-0 text-gray-400" />
+        <div className="flex items-start gap-2 rounded-lg border border-[#d4dadf] bg-[#f5f9f7] p-3">
+          <Clock className="mt-0.5 h-5 w-5 shrink-0 text-[#637785]" />
           <div>
-            <p className="text-sm font-medium text-gray-600">{t('track.lastSeen')}</p>
-            <p className="text-xs text-gray-500">
+            <p className="text-sm font-medium text-[#0d1820]">{t('track.lastSeen')}</p>
+            <p className="text-xs text-[#637785]">
               {staleBuses.length} {staleBuses.length === 1 ? 'bus' : 'buses'} — GPS data older than 5 minutes
             </p>
             <ul className="mt-1 space-y-0.5">
               {staleBuses.slice(0, 3).map((bus) => (
-                <li key={bus.vehiclePlate} className="text-xs text-gray-400">
+                <li key={bus.vehiclePlate} className="text-xs text-[#637785]">
                   {bus.vehiclePlate} ({bus.route})
                 </li>
               ))}
               {staleBuses.length > 3 && (
-                <li className="text-xs text-gray-400">+{staleBuses.length - 3} more</li>
+                <li className="text-xs text-[#637785]">+{staleBuses.length - 3} more</li>
               )}
             </ul>
           </div>

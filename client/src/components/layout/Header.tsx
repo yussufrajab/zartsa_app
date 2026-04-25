@@ -18,21 +18,21 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 h-16 border-b border-[#d4dadf]/50 bg-white/90 backdrop-blur-xl shadow-[0_1px_0_rgba(10,124,92,0.06)]">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 lg:px-6">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setDrawerOpen(true)}
-              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
+              className="rounded-xl p-2 text-[#637885] transition-colors hover:bg-[#e6f4ef] hover:text-[#0a7c5c] lg:hidden"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold shadow-sm">
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#12a07a] to-[#0a7c5c] text-base font-bold text-white shadow-md ring-1 ring-white/20 ring-inset">
                 Z
               </div>
-              <span className="text-xl font-bold text-primary hidden sm:inline">ZARTSA</span>
+              <span className="font-display text-xl font-bold tracking-tight text-[#0d1820] hidden sm:inline">ZARTSA<span className="text-[#0a7c5c]">.</span></span>
             </Link>
           </div>
 
@@ -40,9 +40,9 @@ export function Header() {
             <NotificationBell />
             <button
               onClick={toggleLanguage}
-              className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
+              className="rounded-full border border-[#d4dadf] px-3 py-1.5 text-xs font-bold tracking-widest text-[#475a68] transition-all hover:border-[#0a7c5c] hover:text-[#0a7c5c]"
             >
-              <Globe className="h-4 w-4" />
+              <Globe className="mr-1.5 inline h-3.5 w-3.5" />
               {i18n.language === 'sw' ? 'EN' : 'SW'}
             </button>
           </div>

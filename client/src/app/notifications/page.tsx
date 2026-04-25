@@ -3,9 +3,8 @@
 import { useTranslation } from 'react-i18next';
 import { useNotifications } from '@/components/providers/NotificationProvider';
 import { PageHeader } from '@/components/ui/page-header';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { ListSkeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function NotificationsPage() {
   const { t } = useTranslation();
@@ -15,30 +14,34 @@ export default function NotificationsPage() {
     <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
       <PageHeader title={t('notifications.title')} backHref="/" action={
         notifications.some((n) => !n.isRead) ? (
-          <Button variant="ghost" size="sm" onClick={markAllAsRead}>
+          <button onClick={markAllAsRead}
+            className="rounded-full border border-[#0a7c5c]/30 px-4 py-1.5 text-xs font-semibold text-[#0a7c5c] hover:bg-[#e6f4ef] transition-colors">
             {t('notifications.markAllRead')}
-          </Button>
+          </button>
         ) : undefined
       } />
 
       {isLoading ? (
         <ListSkeleton count={4} />
       ) : notifications.length === 0 ? (
-        <p className="text-sm text-slate-500">{t('notifications.empty')}</p>
+        <p className="text-sm text-[#637885]">{t('notifications.empty')}</p>
       ) : (
         <div className="space-y-3">
           {notifications.map((n) => (
-            <Card key={n.id} variant="gradient" accentColor={!n.isRead ? 'green' : undefined} size="compact"
-              className={!n.isRead ? 'border-l-2 border-l-primary' : ''}>
+            <div key={n.id}
+              className={cn(
+                'rounded-2xl bg-white p-4 transition-colors',
+                !n.isRead ? 'bg-gradient-to-r from-[#e6f4ef] to-white border-l-4 border-l-[#0a7c5c]' : 'border border-[#d4dadf]'
+              )}>
               <div className="flex items-start gap-3">
-                {!n.isRead && <div className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />}
+                {!n.isRead && <div className="mt-1.5 h-2 w-2 rounded-full bg-[#12a07a] animate-pulse flex-shrink-0" />}
                 <div className={!n.isRead ? '' : 'ml-5'}>
-                  <p className="text-sm font-medium text-slate-900">{n.title}</p>
-                  <p className="mt-0.5 text-sm text-slate-500">{n.message}</p>
-                  <p className="mt-1 text-xs text-slate-400">{new Date(n.createdAt).toLocaleString()}</p>
+                  <p className="text-sm font-medium text-[#0d1820]">{n.title}</p>
+                  <p className="mt-0.5 text-sm text-[#2e3f4c]">{n.message}</p>
+                  <p className="mt-1 text-xs text-[#637885]">{new Date(n.createdAt).toLocaleString()}</p>
                 </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}

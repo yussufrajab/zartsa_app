@@ -5,9 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 import type { ItemCategory, ItemStatus } from '@zartsa/shared';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface FoundItem {
   id: string;
@@ -54,17 +53,14 @@ export default function FoundItemDetailPage() {
     finally { setIsClaiming(false); }
   };
 
-  if (isLoading) return <p className="p-4 text-sm text-gray-500">{t('common.loading')}</p>;
-  if (!item) return <p className="p-4 text-sm text-gray-500">{t('common.noResults')}</p>;
+  if (isLoading) return <p className="p-4 text-sm text-[#637885]">{t('common.loading')}</p>;
+  if (!item) return <p className="p-4 text-sm text-[#637885]">{t('common.noResults')}</p>;
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Link href="/lost-found" className="rounded-md p-1 hover:bg-gray-100"><ArrowLeft className="h-5 w-5" /></Link>
-        <h1 className="text-xl font-bold">{t('lostFound.title')}</h1>
-      </div>
+    <div className="mx-auto max-w-lg px-4 py-6 lg:px-6">
+      <PageHeader title={t('lostFound.title')} backHref="/lost-found" />
 
-      <div className="rounded-lg border p-4">
+      <div className="rounded-2xl border border-[#d4dadf] p-4 shadow-[0_2px_8px_rgba(10,124,92,0.07)]">
         <div className="mb-3 flex items-center justify-between">
           <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
             {t(`lostFound.categories.${item.category}`)}
@@ -72,7 +68,7 @@ export default function FoundItemDetailPage() {
           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
             item.status === 'CLAIMED' ? 'bg-blue-100 text-blue-800' :
             item.status === 'MATCHED' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-gray-100 text-gray-800'
+            'bg-[#eaeef0] text-[#2e3f4c]'
           }`}>
             {item.status}
           </span>
@@ -86,7 +82,7 @@ export default function FoundItemDetailPage() {
 
         <p className="mb-3 text-sm">{item.description}</p>
 
-        <div className="space-y-1 text-xs text-gray-500">
+        <div className="space-y-1 text-xs text-[#637885]">
           <p>{t('lostFound.route')}: {item.route}</p>
           <p>{t('lostFound.busNumber')}: {item.busNumber}</p>
           <p>{t('lostFound.foundDate')}: {new Date(item.foundDate).toLocaleDateString()}</p>
@@ -96,7 +92,7 @@ export default function FoundItemDetailPage() {
           <button
             onClick={handleClaim}
             disabled={isClaiming}
-            className="mt-4 w-full rounded-md bg-zartsa-green px-4 py-2 text-sm text-white disabled:opacity-50"
+            className="mt-4 w-full rounded-md bg-[#0a7c5c] px-4 py-2 text-sm text-white disabled:opacity-50"
           >
             {isClaiming ? t('common.loading') : t('lostFound.claim')}
           </button>

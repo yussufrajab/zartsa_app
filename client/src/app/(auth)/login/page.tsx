@@ -5,11 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Card } from '@/components/ui/card';
+import { Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { OtpInput } from '@/components/ui/otp-input';
-import { Phone } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
@@ -46,45 +45,55 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mx-auto max-w-sm px-4 py-8 md:py-12">
-      <Card variant="gradient" accentColor="green" size="spacious">
-        <div className="flex flex-col items-center">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-2xl font-bold text-white shadow-md">
-            Z
-          </div>
-          <h1 className="text-xl font-bold text-slate-900">{t('auth.login')}</h1>
-          <p className="mt-1 text-sm text-slate-500">Welcome back to ZARTSA</p>
-        </div>
+    <div className="min-h-[80vh] flex items-center justify-center px-4">
+      {/* Background accent circles */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-20 right-1/4 h-72 w-72 rounded-full bg-[#0a7c5c]/5 blur-3xl" />
+        <div className="absolute -bottom-20 left-1/4 h-56 w-56 rounded-full bg-[#1a5f8a]/5 blur-3xl" />
+      </div>
 
-        <div className="mt-6 space-y-4">
-          <Input
-            label={t('auth.phone')}
-            icon={<Phone className="h-4 w-4" />}
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+2557XXXXXXXX"
-            disabled={otpSent}
-          />
-
-          {!otpSent ? (
-            <Button className="w-full" onClick={handleSendOtp} loading={loading} disabled={!phone}>
-              {t('auth.sendOtp')}
-            </Button>
-          ) : (
-            <div className="space-y-4">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">{t('auth.otp')}</label>
-                <OtpInput onComplete={handleLogin} disabled={loading} />
-              </div>
+      <div className="relative w-full max-w-sm">
+        <div className="rounded-3xl bg-white shadow-[0_20px_60px_rgba(10,124,92,0.15)] border border-[#d4dadf]/40 p-8">
+          <div className="flex flex-col items-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-[#12a07a] to-[#0a7c5c] shadow-xl ring-4 ring-[#e6f4ef]">
+              <span className="font-display text-3xl font-bold text-white">Z</span>
             </div>
-          )}
-        </div>
+            <h1 className="font-display text-2xl font-bold text-[#0d1820] mt-4">{t('auth.login')}</h1>
+            <p className="text-sm text-[#637885] mt-1">Welcome back to ZARTSA</p>
+          </div>
 
-        <p className="mt-4 text-center text-xs text-slate-500">
-          <Link href="/register" className="text-primary hover:underline">{t('auth.register')}</Link>
-        </p>
-      </Card>
+          <div className="h-px bg-gradient-to-r from-transparent via-[#d4dadf] to-transparent my-6" />
+
+          <div className="space-y-4">
+            <Input
+              label={t('auth.phone')}
+              icon={<Phone className="h-4 w-4" />}
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+2557XXXXXXXX"
+              disabled={otpSent}
+            />
+
+            {!otpSent ? (
+              <Button className="w-full" onClick={handleSendOtp} loading={loading} disabled={!phone}>
+                {t('auth.sendOtp')}
+              </Button>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-2 block text-sm font-medium tracking-wide text-[#2e3f4c]">{t('auth.otp')}</label>
+                  <OtpInput onComplete={handleLogin} disabled={loading} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <p className="mt-4 text-center text-xs text-[#637885]">
+            <Link href="/register" className="text-[#0a7c5c] hover:underline font-semibold">{t('auth.register')}</Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

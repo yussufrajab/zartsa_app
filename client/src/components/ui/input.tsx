@@ -14,13 +14,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="space-y-1.5">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-slate-700">
+          <label htmlFor={inputId} className="block text-sm font-medium tracking-wide text-[#2e3f4c]">
             {label}
           </label>
         )}
-        <div className="relative">
+        <div className="relative group">
           {icon && (
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[#8a9baa] transition-colors group-focus-within:text-[#0a7c5c]">
               {icon}
             </div>
           )}
@@ -28,21 +28,22 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             ref={ref}
             className={cn(
-              'flex h-10 w-full rounded-lg border bg-white px-3 py-2 text-sm transition-colors',
-              'placeholder:text-slate-400',
-              'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1',
+              'h-11 w-full rounded-xl border bg-white px-4 py-2.5 text-sm text-[#0d1820] transition-all duration-200',
+              'placeholder:text-[#8a9baa]',
+              'focus:outline-none focus:border-[#0a7c5c] focus:ring-3 focus:ring-[#0a7c5c]/15',
+              'hover:border-[#b0bcc5]',
               'disabled:cursor-not-allowed disabled:opacity-50',
-              icon && 'pl-10',
+              icon && 'pl-11',
               error
-                ? 'border-red-500 focus:ring-red-500'
-                : 'border-slate-200 hover:border-slate-300',
+                ? 'border-[#d4322c] focus:border-[#d4322c] focus:ring-[#d4322c]/15'
+                : 'border-[#d4dadf]',
               className
             )}
             {...props}
           />
         </div>
-        {error && <p className="text-xs text-red-600">{error}</p>}
-        {hint && !error && <p className="text-xs text-slate-500">{hint}</p>}
+        {error && <p className="text-xs text-[#d4322c]">{error}</p>}
+        {hint && !error && <p className="text-xs text-[#637885]">{hint}</p>}
       </div>
     );
   }
