@@ -102,6 +102,7 @@ model SavedRoute {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("saved_routes")
 }
 
@@ -116,6 +117,7 @@ model NotificationPreference {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, type])
+  @@index([userId])
   @@map("notification_preferences")
 }
 
@@ -156,6 +158,9 @@ model Booking {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([status])
+  @@index([travelDate])
   @@map("bookings")
 }
 
@@ -178,6 +183,8 @@ model Complaint {
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  @@index([userId])
+  @@index([status])
   @@map("complaints")
 }
 
@@ -196,6 +203,9 @@ model LostItemReport {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([category])
+  @@index([status])
   @@map("lost_item_reports")
 }
 
@@ -215,6 +225,9 @@ model FoundItemReport {
 
   reporter User @relation(fields: [reportedBy], references: [id], onDelete: Cascade)
 
+  @@index([reportedBy])
+  @@index([category])
+  @@index([status])
   @@map("found_item_reports")
 }
 
@@ -235,6 +248,9 @@ model Fine {
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
 
+  @@index([drivingLicense])
+  @@index([vehiclePlate])
+  @@index([paymentStatus])
   @@map("fines")
 }
 
@@ -268,6 +284,8 @@ model Notification {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([userId, isRead])
   @@map("notifications")
 }
 
@@ -298,5 +316,7 @@ model AuditLog {
   ipAddress String?
   createdAt DateTime @default(now())
 
+  @@index([userId])
+  @@index([resource])
   @@map("audit_logs")
 }

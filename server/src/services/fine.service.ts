@@ -42,17 +42,13 @@ export async function getFinesByLicense(drivingLicense: string) {
 
       logger.info(`Created ${newFines.length} new fines from ZIMS for license ${drivingLicense}`);
 
-      // Notify users about new fines
-      for (const zf of newFines) {
-        const newFine = await prisma.fine.findUnique({
-          where: { controlNumber: zf.controlNumber },
-        });
+      // Batch-fetch newly created fines and notify
+      const createdFines = await prisma.fine.findMany({
+        where: { controlNumber: { in: newFines.map((zf) => zf.controlNumber) } },
+      });
 
-        if (newFine) {
-          await notifyFineHolders(newFine).catch(() => {
-            /* Don't fail if notification fails */
-          });
-        }
+      for (const fine of createdFines) {
+        await notifyFineHolders(fine).catch(() => {});
       }
 
       // Merge local and newly created fines
@@ -106,17 +102,13 @@ export async function getFinesByVehicle(vehiclePlate: string) {
 
       logger.info(`Created ${newFines.length} new fines from ZIMS for vehicle ${vehiclePlate}`);
 
-      // Notify users about new fines
-      for (const zf of newFines) {
-        const newFine = await prisma.fine.findUnique({
-          where: { controlNumber: zf.controlNumber },
-        });
+      // Batch-fetch newly created fines and notify
+      const createdFines = await prisma.fine.findMany({
+        where: { controlNumber: { in: newFines.map((zf) => zf.controlNumber) } },
+      });
 
-        if (newFine) {
-          await notifyFineHolders(newFine).catch(() => {
-            /* Don't fail if notification fails */
-          });
-        }
+      for (const fine of createdFines) {
+        await notifyFineHolders(fine).catch(() => {});
       }
 
       // Merge local and newly created fines
@@ -171,14 +163,16 @@ export async function payFine(fineId: string, paymentMethod: PaymentMethod, phon
     throw new AppError(402, paymentResult.message, 'PAYMENT_FAILED');
   }
 
-  // Update fine status to PAID
-  const updatedFine = await prisma.fine.update({
-    where: { id: fineId },
-    data: {
-      paymentStatus: 'PAID',
-      paymentRef: paymentResult.transactionRef,
-      paidAt: paymentResult.paidAt,
-    },
+  // Update fine status to PAID in a transaction
+  const updatedFine = await prisma.$transaction(async (tx) => {
+    return tx.fine.update({
+      where: { id: fineId },
+      data: {
+        paymentStatus: 'PAID',
+        paymentRef: paymentResult.transactionRef,
+        paidAt: paymentResult.paidAt,
+      },
+    });
   });
 
   // Queue ZIMS sync
@@ -305,14 +299,17 @@ async function notifyFineHolders(
       select: { id: true },
     });
 
-    for (const user of users) {
-      await createAndSendNotification({
-        userId: user.id,
-        type: notificationData.type,
-        title: notificationData.title,
-        message: notificationData.message,
-      });
-    }
+    // Send notifications in parallel (each handles its own queueing)
+    await Promise.all(
+      users.map((user) =>
+        createAndSendNotification({
+          userId: user.id,
+          type: notificationData.type,
+          title: notificationData.title,
+          message: notificationData.message,
+        }).catch(() => {})
+      )
+    );
   }
 
   if (fine.vehiclePlate && !fine.drivingLicense) {

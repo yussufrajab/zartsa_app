@@ -1,7 +1,7 @@
 node_modules/
 dist/
 .next/
-.env
+**/.env
 .env.local
 *.log
 .DS_Store
@@ -11,3 +11,11 @@ coverage/
 client/next-env.d.ts
 client/tsconfig.tsbuildinfo
 *.Zone.Identifier
+dump.rdb
+
+# Shared package build output
+shared/src/**/*.js
+shared/src/**/*.js.map
+shared/src/**/*.d.ts
+shared/src/**/*.d.ts.map
+!shared/src/**/*.ts

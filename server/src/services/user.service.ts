@@ -233,5 +233,10 @@ async function getUserLicenseNumbers(userId: string): Promise<string[]> {
 }
 
 async function getUserVehiclePlates(userId: string): Promise<string[]> {
-  return [];
+  // Get vehicle plates from bookings where user has active tickets
+  const bookings = await prisma.booking.findMany({
+    where: { userId, status: { in: ['ACTIVE', 'USED'] } },
+    select: { vehiclePlate: true },
+  });
+  return bookings.map(b => b.vehiclePlate).filter((p): p is string => p !== null);
 }

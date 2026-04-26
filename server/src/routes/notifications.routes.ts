@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { markReadSchema, updatePreferenceSchema } from '@zartsa/shared';
+import { parsePagination } from '../utils/pagination';
 import {
   getUserNotifications,
   markAsRead,
@@ -17,8 +18,7 @@ notificationRoutes.use(authenticate);
 
 notificationRoutes.get('/', async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const { page, limit } = parsePagination(req.query as Record<string, string>);
     const result = await getUserNotifications(req.userId!, page, limit);
     res.json({ status: 'ok', data: result });
   } catch (err) { next(err); }
@@ -34,14 +34,14 @@ notificationRoutes.get('/unread-count', async (req, res, next) => {
 notificationRoutes.patch('/read', validate(markReadSchema), async (req, res, next) => {
   try {
     await markAsRead(req.userId!, req.body.ids);
-    res.json({ status: 'ok' });
+    res.json({ status: 'ok', message: 'Notifications marked as read' });
   } catch (err) { next(err); }
 });
 
 notificationRoutes.patch('/read-all', async (req, res, next) => {
   try {
     await markAllAsRead(req.userId!);
-    res.json({ status: 'ok' });
+    res.json({ status: 'ok', message: 'All notifications marked as read' });
   } catch (err) { next(err); }
 });
 

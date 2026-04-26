@@ -6,7 +6,6 @@ import { Map as LeafletMap, TileLayer, Marker, divIcon } from 'leaflet';
 import { io, Socket } from 'socket.io-client';
 import { api } from '@/lib/api-client';
 import type { BusPosition, TrackingFilter } from '@zartsa/shared';
-import 'leaflet/dist/leaflet.css';
 
 interface BusMapProps {
   filter: TrackingFilter;
@@ -155,7 +154,7 @@ export function BusMap({ filter, onPositionsUpdate }: BusMapProps) {
     });
 
     socketIo.on('connect', () => {
-      console.log('[Tracking] Socket connected');
+      // Socket connected
     });
 
     socketIo.on('bus:update', (update: BusPosition) => {
@@ -171,11 +170,11 @@ export function BusMap({ filter, onPositionsUpdate }: BusMapProps) {
     });
 
     socketIo.on('delay:alert', (alert: { vehiclePlate: string; route: string; delayMinutes: number }) => {
-      console.log('[Tracking] Delay alert:', alert);
+      // Delay alert received
     });
 
     socketIo.on('disconnect', () => {
-      console.log('[Tracking] Socket disconnected');
+      // Socket disconnected
     });
 
     setSocket(socketIo);
@@ -219,16 +218,13 @@ export function BusMap({ filter, onPositionsUpdate }: BusMapProps) {
   const activeBuses = positions.filter((p) => !p.isStale);
   const staleBuses = positions.filter((p) => p.isStale);
 
-  if (loading) {
-    return (
-      <div className="flex h-96 items-center justify-center rounded-3xl border border-[#d4dadf] bg-[#f5f9f7]">
-        <p className="text-sm text-[#637785]">{t('common.loading')}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-3xl bg-[#f5f9f7]">
+          <p className="text-sm text-[#637785]">{t('common.loading')}</p>
+        </div>
+      )}
       <div className="absolute left-2 top-2 z-[1000] rounded-xl bg-white/90 backdrop-blur-md px-3 py-1.5 text-xs shadow-md border border-[#d4dadf]/50">
         <span className="inline-block h-3 w-3 rounded-full bg-[#0a7c5c]" /> {t('fare.daladala')} ({activeBuses.filter((b) => b.serviceType === 'daladala').length})
         {' '}

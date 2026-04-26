@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load .env from server directory (works regardless of CWD)
+dotenv.config({ path: path.resolve(process.cwd(), 'server/.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),

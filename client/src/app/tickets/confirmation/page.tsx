@@ -7,6 +7,7 @@ import { api, ApiError } from '@/lib/api-client';
 import { formatTZS, formatDate } from '@/lib/utils';
 import { CheckCircle, Home, TicketCheck } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { Booking } from '@zartsa/shared';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardContent } from '@/components/ui/card';
@@ -119,9 +120,11 @@ function ConfirmationContent() {
           <h3 className="font-display text-base font-semibold text-[#0d1820]">
             {t('tickets.qrCode')}
           </h3>
-          <img
+          <Image
             src={qrImageUrl}
             alt="QR Code"
+            width={192}
+            height={192}
             className="h-48 w-48 rounded-xl border border-[#d4dadf]/60"
           />
           {booking.qrCode && (

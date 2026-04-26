@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api-client';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import type { ItemCategory, ItemStatus } from '@zartsa/shared';
 import { PageHeader } from '@/components/ui/page-header';
 
@@ -76,7 +77,7 @@ export default function FoundItemDetailPage() {
 
         {item.photoUrl && (
           <div className="mb-3">
-            <img src={item.photoUrl} alt="Found item" className="h-48 w-full rounded-md object-cover" />
+            <Image src={item.photoUrl} alt="Found item" width={512} height={192} className="h-48 w-full rounded-md object-cover" />
           </div>
         )}
 

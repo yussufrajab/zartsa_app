@@ -1,17 +1,34 @@
 import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { prisma } from '../lib/prisma';
 import { env } from '../config/env';
 import { AppError, UnauthorizedError } from '../utils/errors';
-import { cacheGet, cacheSet } from './redis.service';
+import { cacheGet, cacheSet, cacheDelete } from './redis.service';
 import { createAndSendNotification } from './notification.service';
 import { logger } from '../utils/logger';
 import type { LoginRequest, RegisterRequest, AuthUser, AuthTokens } from '@zartsa/shared';
 
 const secret = new TextEncoder().encode(env.JWT_SECRET);
 
+/** Parse duration strings like '15m', '7d', '1h' into milliseconds */
+function parseDuration(duration: string): number {
+  const match = duration.match(/^(\d+)(ms|s|m|h|d)$/);
+  if (!match) return 7 * 24 * 60 * 60 * 1000; // default 7d
+  const value = parseInt(match[1], 10);
+  const unit = match[2];
+  switch (unit) {
+    case 'ms': return value;
+    case 's': return value * 1000;
+    case 'm': return value * 60 * 1000;
+    case 'h': return value * 60 * 60 * 1000;
+    case 'd': return value * 24 * 60 * 60 * 1000;
+    default: return 7 * 24 * 60 * 60 * 1000;
+  }
+}
+
 function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return crypto.randomInt(100000, 1000000).toString();
 }
 
 export async function requestOtp(phone: string): Promise<void> {
@@ -96,20 +113,31 @@ async function generateTokens(userId: string, role: string): Promise<AuthTokens>
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime(env.JWT_EXPIRES_IN)
     .setIssuedAt()
+    .setIssuer('zartsa')
+    .setAudience('zartsa-api')
     .sign(secret);
 
   const refreshToken = await new SignJWT({ userId, type: 'refresh' })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime(env.REFRESH_TOKEN_EXPIRES_IN)
     .setIssuedAt()
+    .setIssuer('zartsa')
+    .setAudience('zartsa-api')
     .sign(secret);
+
+  // Store refresh token in Redis for revocation support
+  const refreshTtlMs = parseDuration(env.REFRESH_TOKEN_EXPIRES_IN);
+  await cacheSet(`refresh:${userId}`, refreshToken, refreshTtlMs);
 
   return { accessToken, refreshToken };
 }
 
 export async function verifyAccessToken(token: string): Promise<{ userId: string; role: string }> {
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, secret, {
+      issuer: 'zartsa',
+      audience: 'zartsa-api',
+    });
     return { userId: payload.userId as string, role: payload.role as string };
   } catch {
     throw new UnauthorizedError('Invalid or expired token');
@@ -118,11 +146,21 @@ export async function verifyAccessToken(token: string): Promise<{ userId: string
 
 export async function refreshToken(refreshToken: string): Promise<AuthTokens> {
   try {
-    const { payload } = await jwtVerify(refreshToken, secret);
+    const { payload } = await jwtVerify(refreshToken, secret, {
+      issuer: 'zartsa',
+      audience: 'zartsa-api',
+    });
     if (payload.type !== 'refresh') {
       throw new UnauthorizedError('Invalid refresh token');
     }
     const userId = payload.userId as string;
+
+    // Validate refresh token against Redis (supports revocation)
+    const storedToken = await cacheGet<string>(`refresh:${userId}`);
+    if (!storedToken || storedToken !== refreshToken) {
+      throw new UnauthorizedError('Refresh token has been revoked');
+    }
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user || !user.isActive) {
       throw new UnauthorizedError('User not found or inactive');
@@ -132,6 +170,11 @@ export async function refreshToken(refreshToken: string): Promise<AuthTokens> {
     if (err instanceof UnauthorizedError) throw err;
     throw new UnauthorizedError('Invalid or expired refresh token');
   }
+}
+
+/** Logout: revoke the refresh token for a user */
+export async function logout(userId: string): Promise<void> {
+  await cacheDelete(`refresh:${userId}`);
 }
 
 export async function getAuthUser(userId: string): Promise<AuthUser> {

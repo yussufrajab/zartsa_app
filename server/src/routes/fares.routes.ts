@@ -14,7 +14,7 @@ faresRoutes.get('/search', async (req, res, next) => {
     const destination = req.query.destination as string;
 
     if (!routeType || !departure || !destination) {
-      return res.json({ status: 'ok', data: [] });
+      return res.status(400).json({ status: 'error', code: 'VALIDATION_ERROR', message: 'routeType, departure, and destination are required' });
     }
 
     if (!['daladala', 'shamba'].includes(routeType)) {

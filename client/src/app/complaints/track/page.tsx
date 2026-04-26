@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api-client';
 import { COMPLAINT_CATEGORIES } from '@zartsa/shared';
@@ -36,7 +36,7 @@ const statusVariant: Record<ComplaintStatus, 'info' | 'warning' | 'gold' | 'succ
   CLOSED: 'neutral',
 };
 
-export default function TrackComplaintPage() {
+function TrackComplaintContent() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const [referenceNumber, setReferenceNumber] = useState(searchParams.get('ref') || '');
@@ -160,5 +160,21 @@ export default function TrackComplaintPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function TrackComplaintPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-lg px-4 py-6 lg:px-6">
+          <div className="flex items-center justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0a7c5c] border-t-transparent" />
+          </div>
+        </div>
+      }
+    >
+      <TrackComplaintContent />
+    </Suspense>
   );
 }

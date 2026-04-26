@@ -1,5 +1,5 @@
 import { prisma } from '../lib/prisma';
-import { createAndSendNotification } from './notification.service';
+import { pushQueue } from './queue.service';
 import { NOTIFICATION_TYPES } from '@zartsa/shared';
 import type { AnnouncementCategory, CreateAnnouncementInput, UpdateAnnouncementInput } from '@zartsa/shared';
 
@@ -80,17 +80,34 @@ export async function publishAnnouncement(id: string) {
     select: { userId: true },
   });
 
+  if (optedInUsers.length === 0) return announcement;
+
   const title = announcement.titleEn;
   const message = `New ${announcement.category.replace(/_/g, ' ').toLowerCase()}: ${title}`;
 
-  for (const user of optedInUsers) {
-    await createAndSendNotification({
-      userId: user.userId,
+  // Batch-create in-app notifications for all opted-in users
+  await prisma.notification.createMany({
+    data: optedInUsers.map((u) => ({
+      userId: u.userId,
       type: 'new_announcement',
-      title: title,
-      message: message,
-    }).catch(() => { /* Don't fail publish if notification fails */ });
-  }
+      title,
+      message,
+      channel: 'IN_APP',
+      isRead: false,
+    })),
+  });
+
+  // Queue push notifications in parallel
+  await Promise.all(
+    optedInUsers.map((u) =>
+      pushQueue.add('push', {
+        userId: u.userId,
+        title,
+        message,
+        type: 'new_announcement',
+      }).catch(() => {})
+    )
+  );
 
   return announcement;
 }

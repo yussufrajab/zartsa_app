@@ -23,6 +23,8 @@ export function DeleteAccount({ onDeleted }: DeleteAccountProps) {
       await api.delete('/users/me', { body: JSON.stringify({ confirmation: 'DELETE' }) } as RequestInit);
       toast.success(t('profile.accountDeleted'));
       localStorage.removeItem('zartsa_token');
+      localStorage.removeItem('zartsa_refresh_token');
+      localStorage.removeItem('zartsa_lang');
       onDeleted();
     } catch (err) {
       toast.error((err as Error).message);

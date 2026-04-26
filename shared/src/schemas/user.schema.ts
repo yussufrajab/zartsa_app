@@ -28,6 +28,11 @@ export const deleteAccountSchema = z.object({
   }),
 });
 
+export const languageSchema = z.object({
+  language: z.enum(['sw', 'en'], { errorMap: () => ({ message: 'Language must be sw or en' }) }),
+});
+
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type SaveRouteInput = z.infer<typeof saveRouteSchema>;
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+export type LanguageInput = z.infer<typeof languageSchema>;

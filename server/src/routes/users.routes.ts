@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimit } from '../middleware/rateLimit';
-import { updateProfileSchema, saveRouteSchema, deleteAccountSchema } from '@zartsa/shared';
+import { updateProfileSchema, saveRouteSchema, deleteAccountSchema, languageSchema } from '@zartsa/shared';
 import {
   getUserProfile,
   updateUserProfile,
@@ -55,13 +55,10 @@ usersRoutes.delete('/me',
 // PUT /api/users/me/language - Update preferred language
 usersRoutes.put('/me/language',
   rateLimit('profile-update', 10, 60_000),
+  validate(languageSchema),
   async (req, res, next) => {
     try {
-      const { language } = req.body as { language: 'sw' | 'en' };
-      if (language !== 'sw' && language !== 'en') {
-        return res.status(400).json({ status: 'error', message: 'Language must be sw or en' });
-      }
-      const result = await updateLanguage(req.userId!, language as 'sw' | 'en');
+      const result = await updateLanguage(req.userId!, req.body.language);
       res.json({ status: 'ok', data: result });
     } catch (err) { next(err); }
   }

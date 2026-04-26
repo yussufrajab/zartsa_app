@@ -1,5 +1,7 @@
 // server/src/services/payment.service.ts
 import { logger } from '../utils/logger';
+import { env } from '../config/env';
+import { AppError } from '../utils/errors';
 import type { PaymentMethod } from '@zartsa/shared';
 
 export interface PaymentRequest {
@@ -27,6 +29,10 @@ export async function processPayment(request: PaymentRequest): Promise<PaymentRe
     method: request.paymentMethod,
     controlNumber: request.controlNumber,
   });
+
+  if (env.NODE_ENV === 'production') {
+    throw new AppError(501, 'Payment gateway not configured for production', 'PAYMENT_NOT_CONFIGURED');
+  }
 
   // Simulate payment processing delay
   await new Promise(resolve => setTimeout(resolve, 500));

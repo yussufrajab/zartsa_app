@@ -22,8 +22,19 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'ZARTSA - Zanzibar Road Transport & Safety Authority',
-  description: 'Citizen services portal for Zanzibar road transport',
+  title: {
+    default: 'ZARTSA - Zanzibar Road Transport & Safety Authority',
+    template: '%s | ZARTSA',
+  },
+  description: 'Citizen services portal for Zanzibar road transport — check fares, track buses, report complaints, pay fines, and more.',
+  keywords: ['ZARTSA', 'Zanzibar', 'transport', 'bus fares', 'daladala', 'road safety'],
+  authors: [{ name: 'ZARTSA' }],
+  openGraph: {
+    title: 'ZARTSA',
+    description: 'Zanzibar Road Transport & Safety Authority — citizen services portal',
+    type: 'website',
+    locale: 'en_TZ',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

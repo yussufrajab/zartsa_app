@@ -15,7 +15,7 @@ export async function reportLostItem(data: {
     data: { ...data, status: 'REPORTED' },
   });
 
-  await findMatchesForLostItem(item.id, data.category, data.route, data.description);
+  await findMatchesForLostItem(item.id, data.userId, data.category, data.route, data.description);
 
   return item;
 }
@@ -55,32 +55,33 @@ export async function reportFoundItem(data: {
   return item;
 }
 
-async function findMatchesForLostItem(lostItemId: string, category: ItemCategory, route: string, description: string) {
+async function findMatchesForLostItem(lostItemId: string, lostUserId: string, category: ItemCategory, route: string, description: string) {
   const foundItems = await prisma.foundItemReport.findMany({
     where: { category, status: 'FOUND' },
+    select: { id: true, description: true, route: true },
   });
 
   for (const found of foundItems) {
     const score = calculateMatchScore(description, found.description, route, found.route);
     if (score >= 0.5) {
-      await prisma.lostItemReport.update({
-        where: { id: lostItemId },
-        data: { status: 'MATCHED', matchedWith: found.id },
-      });
-      await prisma.foundItemReport.update({
-        where: { id: found.id },
-        data: { status: 'MATCHED' },
+      await prisma.$transaction(async (tx) => {
+        await tx.lostItemReport.update({
+          where: { id: lostItemId },
+          data: { status: 'MATCHED', matchedWith: found.id },
+        });
+        await tx.foundItemReport.update({
+          where: { id: found.id },
+          data: { status: 'MATCHED' },
+        });
       });
 
-      const lostItem = await prisma.lostItemReport.findUnique({ where: { id: lostItemId } });
-      if (lostItem) {
-        await createAndSendNotification({
-          userId: lostItem.userId,
-          type: 'lost_item_match',
-          title: 'Kifaa chako kimepatikana / Item match found',
-          message: `A found item matching your report may be yours: ${found.description.slice(0, 100)}`,
-        }).catch(() => {});
-      }
+      // Use the userId we already have instead of re-querying
+      await createAndSendNotification({
+        userId: lostUserId,
+        type: 'lost_item_match',
+        title: 'Kifaa chako kimepatikana / Item match found',
+        message: `A found item matching your report may be yours: ${found.description.slice(0, 100)}`,
+      }).catch(() => {});
       break;
     }
   }
@@ -89,18 +90,21 @@ async function findMatchesForLostItem(lostItemId: string, category: ItemCategory
 async function findMatchesForFoundItem(foundItemId: string, category: ItemCategory, route: string, description: string) {
   const lostItems = await prisma.lostItemReport.findMany({
     where: { category, status: 'REPORTED' },
+    select: { id: true, userId: true, description: true, route: true },
   });
 
   for (const lost of lostItems) {
     const score = calculateMatchScore(description, lost.description, route, lost.route);
     if (score >= 0.5) {
-      await prisma.foundItemReport.update({
-        where: { id: foundItemId },
-        data: { status: 'MATCHED' },
-      });
-      await prisma.lostItemReport.update({
-        where: { id: lost.id },
-        data: { status: 'MATCHED', matchedWith: foundItemId },
+      await prisma.$transaction(async (tx) => {
+        await tx.foundItemReport.update({
+          where: { id: foundItemId },
+          data: { status: 'MATCHED' },
+        });
+        await tx.lostItemReport.update({
+          where: { id: lost.id },
+          data: { status: 'MATCHED', matchedWith: foundItemId },
+        });
       });
 
       await createAndSendNotification({

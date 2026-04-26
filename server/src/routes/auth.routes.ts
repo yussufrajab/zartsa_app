@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { validate } from '../middleware/validate';
 import { otpRequestSchema, loginSchema, registerSchema } from '@zartsa/shared';
-import { requestOtp, login, register, refreshToken } from '../services/auth.service';
+import { requestOtp, login, register, refreshToken, logout } from '../services/auth.service';
 import { rateLimit } from '../middleware/rateLimit';
 import { authenticate } from '../middleware/auth';
 import { getAuthUser } from '../services/auth.service';
@@ -20,6 +20,7 @@ authRoutes.post('/otp',
 );
 
 authRoutes.post('/login',
+  rateLimit('auth-login', 10, 15 * 60 * 1000),
   validate(loginSchema),
   async (req, res, next) => {
     try {
@@ -30,6 +31,7 @@ authRoutes.post('/login',
 );
 
 authRoutes.post('/register',
+  rateLimit('auth-register', 5, 60 * 60 * 1000),
   validate(registerSchema),
   async (req, res, next) => {
     try {
@@ -49,13 +51,20 @@ authRoutes.get('/me',
   }
 );
 
-authRoutes.post('/refresh', async (req, res, next) => {
+authRoutes.post('/refresh', rateLimit('auth-refresh', 20, 60 * 1000), async (req, res, next) => {
   try {
     const { refreshToken: token } = req.body;
     if (!token) {
-      return res.status(400).json({ status: 'error', message: 'Refresh token required' });
+      return res.status(400).json({ status: 'error', code: 'VALIDATION_ERROR', message: 'Refresh token required' });
     }
     const tokens = await refreshToken(token);
     res.json({ status: 'ok', data: tokens });
+  } catch (err) { next(err); }
+});
+
+authRoutes.post('/logout', authenticate, async (req, res, next) => {
+  try {
+    await logout(req.userId!);
+    res.json({ status: 'ok', message: 'Logged out successfully' });
   } catch (err) { next(err); }
 });

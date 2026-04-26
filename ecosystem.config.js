@@ -1,0 +1,43 @@
+module.exports = {
+  apps: [
+    {
+      name: 'zartsa-api',
+      script: 'server/dist/index.js',
+      cwd: '/home/nextjstest/zartsa',
+      env: {
+        NODE_ENV: 'production',
+      },
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      max_memory_restart: '512M',
+      error_file: '/tmp/zartsa/api-error.log',
+      out_file: '/tmp/zartsa/api-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss',
+      merge_logs: true,
+      autorestart: true,
+      max_restarts: 10,
+      restart_delay: 3000,
+    },
+    {
+      name: 'zartsa-web',
+      script: 'node_modules/.bin/next',
+      args: 'start',
+      cwd: '/home/nextjstest/zartsa/client',
+      env: {
+        NODE_ENV: 'production',
+      },
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      max_memory_restart: '512M',
+      error_file: '/tmp/zartsa/frontend-error.log',
+      out_file: '/tmp/zartsa/frontend-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss',
+      merge_logs: true,
+      autorestart: true,
+      max_restarts: 10,
+      restart_delay: 3000,
+    },
+  ],
+};

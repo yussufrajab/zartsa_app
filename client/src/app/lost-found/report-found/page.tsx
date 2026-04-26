@@ -37,7 +37,7 @@ export default function ReportFoundPage() {
       formData.append('foundDate', new Date(form.foundDate).toISOString());
       if (photo) formData.append('photo', photo);
       // Use fetch directly since api client always sets Content-Type to application/json
-      const token = typeof window !== 'undefined' ? localStorage.getItem('zartsa_token') : null;
+      const token = api.getToken();
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
       const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';

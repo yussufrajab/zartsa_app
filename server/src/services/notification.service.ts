@@ -14,9 +14,16 @@ export interface CreateNotificationParams {
 export async function createAndSendNotification(params: CreateNotificationParams) {
   const { userId, type, title, message, forceChannel } = params;
 
-  const pref = await prisma.notificationPreference.findUnique({
-    where: { userId_type: { userId, type } },
-  });
+  // Fetch preference and user info in a single parallel query
+  const [pref, user] = await Promise.all([
+    prisma.notificationPreference.findUnique({
+      where: { userId_type: { userId, type } },
+    }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, phone: true, email: true },
+    }),
+  ]);
 
   const defaults = DEFAULT_NOTIFICATION_PREFS[type];
   const inApp = forceChannel === 'IN_APP' || (!forceChannel && (pref?.inApp ?? defaults.inApp));
@@ -40,25 +47,19 @@ export async function createAndSendNotification(params: CreateNotificationParams
     });
   }
 
-  if (sms) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (user?.phone) {
-      await smsQueue.add('sms', {
-        to: user.phone,
-        message: `[ZARTSA] ${message}`,
-      });
-    }
+  if (sms && user?.phone) {
+    await smsQueue.add('sms', {
+      to: user.phone,
+      message: `[ZARTSA] ${message}`,
+    });
   }
 
-  if (email) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (user?.email) {
-      await emailQueue.add('email', {
-        to: user.email,
-        subject: title,
-        body: message,
-      });
-    }
+  if (email && user?.email) {
+    await emailQueue.add('email', {
+      to: user.email,
+      subject: title,
+      body: message,
+    });
   }
 
   return notifications;

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createBookingSchema } from '@zartsa/shared';
+import { parsePagination } from '../utils/pagination';
 import {
   searchRoutes,
   getSeatLayout,
@@ -74,8 +75,7 @@ ticketsRoutes.post('/', authenticate, validate(createBookingSchema), async (req,
 // GET /my - Get user's bookings (paginated)
 ticketsRoutes.get('/my', authenticate, async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const { page, limit } = parsePagination(req.query as Record<string, string>);
     const result = await getUserBookings(req.userId!, page, limit);
     res.json({ status: 'ok', data: result });
   } catch (err) { next(err); }

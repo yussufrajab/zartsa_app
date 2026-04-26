@@ -1,5 +1,6 @@
 import { Server, type Socket } from 'socket.io';
 import type { Server as HttpServer } from 'http';
+import { verifyAccessToken } from './services/auth.service';
 import { logger } from './utils/logger';
 
 let io: Server;
@@ -13,8 +14,24 @@ export function setupSocketIO(httpServer: HttpServer): Server {
     transports: ['websocket', 'polling'],
   });
 
+  // Authenticate Socket.IO connections
+  io.use(async (socket, next) => {
+    const token = socket.handshake.auth.token || socket.handshake.query.token;
+    if (!token) {
+      return next(new Error('Authentication required'));
+    }
+    try {
+      const decoded = await verifyAccessToken(token as string);
+      socket.data.userId = decoded.userId;
+      socket.data.role = decoded.role;
+      next();
+    } catch {
+      next(new Error('Invalid or expired token'));
+    }
+  });
+
   io.on('connection', (socket: Socket) => {
-    logger.info('Socket client connected', { socketId: socket.id });
+    logger.info('Socket client connected', { socketId: socket.id, userId: socket.data.userId });
 
     socket.on('subscribe:route', (route: string) => {
       socket.join(`route:${route}`);

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { rateLimit } from '../middleware/rateLimit';
 import { validate } from '../middleware/validate';
 import { verifyRequestSchema } from '@zartsa/shared';
@@ -19,21 +20,23 @@ verifyRoutes.post('/',
   }
 );
 
-verifyRoutes.post('/license', async (req, res, next) => {
+const numberSchema = z.object({ number: z.string().min(1).max(100) });
+
+verifyRoutes.post('/license', validate(numberSchema), async (req, res, next) => {
   try {
     const result = await verifyDocument('driving_license', req.body.number);
     res.json({ status: 'ok', data: result });
   } catch (err) { next(err); }
 });
 
-verifyRoutes.post('/vehicle', async (req, res, next) => {
+verifyRoutes.post('/vehicle', validate(numberSchema), async (req, res, next) => {
   try {
     const result = await verifyDocument('road_license', req.body.number);
     res.json({ status: 'ok', data: result });
   } catch (err) { next(err); }
 });
 
-verifyRoutes.post('/badge', async (req, res, next) => {
+verifyRoutes.post('/badge', validate(numberSchema), async (req, res, next) => {
   try {
     const result = await verifyDocument('driver_conductor_badge', req.body.number);
     res.json({ status: 'ok', data: result });

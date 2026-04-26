@@ -284,22 +284,24 @@ export async function createBooking(data: {
     const qrObjectName = `qr-codes/${bookingRef}.png`;
     const qrCodePath = await uploadFile(qrObjectName, qrBuffer, 'image/png');
 
-    // Create booking record
-    const booking = await prisma.booking.create({
-      data: {
-        userId,
-        departure,
-        destination,
-        travelDate: new Date(travelDate),
-        passengerCount,
-        seatNumbers,
-        totalAmount,
-        currency: fare.currency,
-        paymentMethod,
-        paymentRef: paymentResult.transactionRef,
-        status: 'ACTIVE',
-        qrCode: qrCodePath,
-      },
+    // Create booking record inside a transaction
+    const booking = await prisma.$transaction(async (tx) => {
+      return tx.booking.create({
+        data: {
+          userId,
+          departure,
+          destination,
+          travelDate: new Date(travelDate),
+          passengerCount,
+          seatNumbers,
+          totalAmount,
+          currency: fare.currency,
+          paymentMethod,
+          paymentRef: paymentResult.transactionRef,
+          status: 'ACTIVE',
+          qrCode: qrCodePath,
+        },
+      });
     });
 
     // Release seat locks (booking is now in DB)
@@ -356,10 +358,12 @@ export async function cancelBooking(bookingId: string, userId: string) {
     throw new AppError(400, 'Only active bookings can be cancelled', 'INVALID_STATUS');
   }
 
-  // Update status to CANCELLED
-  const updated = await prisma.booking.update({
-    where: { id: bookingId },
-    data: { status: 'CANCELLED' as TicketStatus },
+  // Update status to CANCELLED in a transaction
+  const updated = await prisma.$transaction(async (tx) => {
+    return tx.booking.update({
+      where: { id: bookingId },
+      data: { status: 'CANCELLED' as TicketStatus },
+    });
   });
 
   // Release seat locks in Redis (in case they still exist)

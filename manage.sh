@@ -16,6 +16,25 @@ LOG_DIR="/tmp/zartsa"
 MODE="${ZARTSA_MODE:-dev}"
 
 # =============================================================================
+# NVM SETUP (required for Node.js on this server)
+# =============================================================================
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+# =============================================================================
+# SUDO PASSWORD (for PostgreSQL start/stop on this server)
+# =============================================================================
+# Cache sudo credentials on first use so interactive prompts don't block
+SUDO_PASSWORD="${ZARTSA_SUDO_PASSWORD:-}"
+sudo_refresh() {
+    if [ -n "$SUDO_PASSWORD" ]; then
+        echo "$SUDO_PASSWORD" | sudo -S -v >/dev/null 2>&1
+    else
+        sudo -v 2>/dev/null
+    fi
+}
+
+# =============================================================================
 # SERVICE PORTS
 # =============================================================================
 POSTGRES_PORT=5432
@@ -35,9 +54,9 @@ PRISMA_STUDIO_LOG="$LOG_DIR/prisma-studio.log"
 # =============================================================================
 # DATABASE CONFIG
 # =============================================================================
-DB_NAME="zardb"
-DB_USER="postgres"
-DB_PASS="postgres"
+DB_NAME="${DB_NAME:-zardb}"
+DB_USER="${DB_USER:-postgres}"
+DB_PASS="${DB_PASS:-postgres}"
 
 # =============================================================================
 # INFRASTRUCTURE SERVICES (managed directly, no sudo)
@@ -76,7 +95,7 @@ log_header() {
 # PORT & PROCESS MANAGEMENT
 # =============================================================================
 
-# Check if a TCP port has a listener
+# Check if a TCP port has a listener (uses ss + lsof, reliable for all services)
 port_is_open() {
     local port=$1
     lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1 && return 0
@@ -94,10 +113,15 @@ http_responds() {
 
 # Get PID occupying a port
 port_pid() {
-    lsof -ti:$1 2>/dev/null | head -1
+    local pid
+    pid=$(lsof -ti:$1 2>/dev/null | head -1)
+    if [ -z "$pid" ]; then
+        pid=$(ss -tlnp "( sport = :$1 )" 2>/dev/null | grep -oP 'pid=\K[0-9]+' | head -1)
+    fi
+    echo "$pid"
 }
 
-# Kill whatever is holding a port
+# Kill whatever is holding a port (uses fuser -k for app ports, kill for infra)
 kill_port() {
     local port=$1
     local label="${2:-port $port}"
@@ -107,30 +131,32 @@ kill_port() {
     fi
 
     log_warning "$label: port $port is in use, freeing it..."
+
+    # First try: kill by PID
     local pid
     pid=$(port_pid "$port")
     if [ -n "$pid" ]; then
-        kill -9 "$pid" 2>/dev/null
+        kill -9 "$pid" 2>/dev/null || sudo kill -9 "$pid" 2>/dev/null
         sleep 1
     fi
 
-    # Second attempt with fuser
+    # Second try: fuser -k (reliable for app processes, especially root-owned)
     if port_is_open "$port"; then
-        fuser -k "$port/tcp" 2>/dev/null
+        fuser -k "$port/tcp" 2>/dev/null || sudo fuser -k "$port/tcp" 2>/dev/null
         sleep 1
     fi
 
-    # Final check
+    # Final try: sudo kill if still held
     if port_is_open "$port"; then
         pid=$(port_pid "$port")
         if [ -n "$pid" ]; then
-            kill -9 "$pid" 2>/dev/null
+            sudo kill -9 "$pid" 2>/dev/null
             sleep 1
         fi
     fi
 
     if port_is_open "$port"; then
-        log_error "$label: could not free port $port"
+        log_error "$label: could not free port $port (set ZARTSA_SUDO_PASSWORD if process is owned by another user)"
         return 1
     fi
 
@@ -230,16 +256,15 @@ start_postgres() {
         log_success "postgresql: already running"
         return 0
     fi
-    # Try systemctl first (Linux with systemd), fall back to direct start
-    if command -v systemctl &>/dev/null && systemctl is-active --quiet "postgresql" 2>/dev/null; then
-        log_success "postgresql: already running (systemd)"
-        return 0
+    # Start via sudo — pg_ctlcluster requires cluster owner (postgres) or root
+    if command -v systemctl &>/dev/null; then
+        sudo systemctl start postgresql 2>/dev/null
     fi
-    # Try starting via pg_ctl or service command (no sudo)
-    if command -v pg_ctlcluster &>/dev/null; then
-        pg_ctlcluster 16 main start 2>/dev/null || pg_ctlcluster 15 main start 2>/dev/null || pg_ctlcluster 14 main start 2>/dev/null
-    elif command -v service &>/dev/null; then
-        service postgresql start 2>/dev/null
+    if ! is_postgres_running && command -v pg_ctlcluster &>/dev/null; then
+        sudo pg_ctlcluster 16 main start 2>/dev/null || sudo pg_ctlcluster 15 main start 2>/dev/null || sudo pg_ctlcluster 14 main start 2>/dev/null
+    fi
+    if ! is_postgres_running && command -v service &>/dev/null; then
+        sudo service postgresql start 2>/dev/null
     fi
     # Wait and check
     for i in $(seq 1 10); do
@@ -258,13 +283,20 @@ stop_postgres() {
         log_info "postgresql: not running"
         return 0
     fi
-    # Graceful shutdown via pg_ctlcluster
-    if command -v pg_ctlcluster &>/dev/null; then
-        pg_ctlcluster 16 main stop 2>/dev/null || pg_ctlcluster 15 main stop 2>/dev/null || pg_ctlcluster 14 main stop 2>/dev/null || true
-    elif command -v service &>/dev/null; then
-        service postgresql stop 2>/dev/null || true
+    # Graceful shutdown — try systemctl first, then pg_ctlcluster
+    if command -v systemctl &>/dev/null; then
+        sudo systemctl stop postgresql 2>/dev/null || true
     fi
-    # Wait for port to free
+    if is_postgres_running && command -v pg_ctlcluster &>/dev/null; then
+        sudo -u postgres pg_ctlcluster 16 main stop -m fast 2>/dev/null || \
+        sudo -u postgres pg_ctlcluster 15 main stop -m fast 2>/dev/null || \
+        sudo -u postgres pg_ctlcluster 14 main stop -m fast 2>/dev/null || \
+        sudo pg_ctlcluster 16 main stop -m fast 2>/dev/null || true
+    fi
+    if is_postgres_running && command -v service &>/dev/null; then
+        sudo service postgresql stop 2>/dev/null || true
+    fi
+    # Wait for it to stop
     for i in $(seq 1 5); do
         if ! is_postgres_running; then
             log_success "postgresql: stopped"
@@ -276,17 +308,17 @@ stop_postgres() {
     local pid
     pid=$(port_pid "$POSTGRES_PORT")
     if [ -n "$pid" ]; then
-        kill "$pid" 2>/dev/null
+        sudo kill "$pid" 2>/dev/null
     fi
     log_success "postgresql: stopped"
 }
 
 is_postgres_running() {
-    port_is_open "$POSTGRES_PORT"
+    PGPASSWORD="$DB_PASS" psql -U "$DB_USER" -h localhost -p "$POSTGRES_PORT" -d "$DB_NAME" -c "SELECT 1" >/dev/null 2>&1
 }
 
 check_database() {
-    if psql "postgresql://$DB_USER:$DB_PASS@localhost:$POSTGRES_PORT/$DB_NAME" -c "SELECT 1" >/dev/null 2>&1; then
+    if PGPASSWORD="$DB_PASS" psql -U "$DB_USER" -h localhost -p "$POSTGRES_PORT" -d "$DB_NAME" -c "SELECT 1" >/dev/null 2>&1; then
         return 0
     else
         return 1
@@ -344,7 +376,8 @@ is_redis_running() {
 # MINIO
 # =============================================================================
 
-MINIO_DATA_DIR="${MINIO_DATA_DIR:-$HOME/.minio-data}"
+MINIO_BIN="${MINIO_BIN:-/home/nextjs/minio}"
+MINIO_DATA_DIR="${MINIO_DATA_DIR:-/var/lib/postgresql/minio-data}"
 MINIO_ACCESS_KEY="${MINIO_ACCESS_KEY:-minioadmin}"
 MINIO_SECRET_KEY="${MINIO_SECRET_KEY:-minioadmin}"
 
@@ -353,8 +386,20 @@ start_minio() {
         log_success "minio: already running"
         return 0
     fi
+
+    # Resolve MinIO binary
+    local minio_bin="$MINIO_BIN"
+    if [ ! -x "$minio_bin" ]; then
+        # Fallback: check PATH
+        minio_bin="$(command -v minio 2>/dev/null)"
+    fi
+    if [ -z "$minio_bin" ]; then
+        log_error "minio: binary not found at $MINIO_BIN and not in PATH"
+        return 1
+    fi
+
     mkdir -p "$MINIO_DATA_DIR"
-    MINIO_ROOT_USER="$MINIO_ACCESS_KEY" MINIO_ROOT_PASSWORD="$MINIO_SECRET_KEY" nohup minio server "$MINIO_DATA_DIR" --address ":$MINIO_PORT" --console-address ":$((MINIO_PORT + 1))" > /tmp/minio.log 2>&1 &
+    MINIO_ROOT_USER="$MINIO_ACCESS_KEY" MINIO_ROOT_PASSWORD="$MINIO_SECRET_KEY" nohup "$minio_bin" server "$MINIO_DATA_DIR" --address ":$MINIO_PORT" --console-address ":$((MINIO_PORT + 1))" > /tmp/minio.log 2>&1 &
     local pid=$!
     # Wait for MinIO to be ready
     for i in $(seq 1 15); do
@@ -417,6 +462,12 @@ start_api() {
         return 1
     fi
 
+    # Ensure Prisma client is generated
+    if [ ! -d "$APP_DIR/server/src/generated" ]; then
+        log_warning "Prisma client not generated. Running db-generate..."
+        db_generate
+    fi
+
     mkdir -p "$LOG_DIR"
 
     if is_dev; then
@@ -432,7 +483,7 @@ start_api() {
 
         if command -v pm2 &>/dev/null; then
             cd "$APP_DIR"
-            pm2 start server/dist/index.js --name zartsa-api
+            pm2 start server/dist/index.js --name zartsa-api --cwd "$APP_DIR"
         else
             cd "$APP_DIR/server"
             NODE_ENV=production nohup node dist/index.js > "$API_LOG" 2>&1 &
@@ -493,8 +544,7 @@ start_frontend() {
         fi
 
         if command -v pm2 &>/dev/null; then
-            cd "$APP_DIR"
-            pm2 start "npx next start" --name zartsa-web
+            pm2 start "npx next start" --name zartsa-web --cwd "$APP_DIR/client"
         else
             cd "$APP_DIR/client"
             NODE_ENV=production nohup npx next start > "$FRONTEND_LOG" 2>&1 &
@@ -551,6 +601,93 @@ stop_prisma_studio() {
     pkill -f "prisma-studio" 2>/dev/null
     kill_port "$PRISMA_STUDIO_PORT" "Prisma Studio"
     log_success "Prisma Studio stopped"
+}
+
+# =============================================================================
+# PRODUCTION START (build + start)
+# =============================================================================
+
+start_prod_all() {
+    log_header "Starting all services [PROD]"
+
+    # 1. Build first
+    log_info "Building server and client for production..."
+    build_all
+    if [ $? -ne 0 ]; then
+        log_error "Build failed. Aborting production start."
+        return 1
+    fi
+
+    # 2. Set mode to prod
+    MODE="prod"
+
+    # 3. Start infrastructure
+    start_infra
+    local infra_fail=$?
+    if [ $infra_fail -gt 0 ]; then
+        log_warning "Some infrastructure services failed to start"
+    fi
+
+    # 4. API server
+    start_api
+    local api_result=$?
+
+    # 5. Frontend
+    start_frontend
+    local fe_result=$?
+
+    echo ""
+    echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${BOLD}  Production Start Summary${NC}"
+    echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+    local result=0
+
+    if is_postgres_running; then
+        echo -e "  ${GREEN}● PostgreSQL${NC}  port $POSTGRES_PORT  db: $DB_NAME"
+    else
+        echo -e "  ${RED}● PostgreSQL${NC}  NOT RUNNING"
+        result=1
+    fi
+
+    if is_redis_running; then
+        echo -e "  ${GREEN}● Redis${NC}       port $REDIS_PORT"
+    else
+        echo -e "  ${RED}● Redis${NC}       NOT RUNNING"
+        result=1
+    fi
+
+    if is_minio_running; then
+        echo -e "  ${GREEN}● MinIO${NC}       port $MINIO_PORT  bucket: zartsa"
+    else
+        echo -e "  ${RED}● MinIO${NC}       NOT RUNNING"
+        result=1
+    fi
+
+    if [ $api_result -eq 0 ]; then
+        echo -e "  ${GREEN}● API Server${NC}  port $API_PORT  http://localhost:$API_PORT/health  (PROD)"
+    else
+        echo -e "  ${RED}● API Server${NC}  FAILED TO START"
+        result=1
+    fi
+
+    if [ $fe_result -eq 0 ]; then
+        echo -e "  ${GREEN}● Frontend${NC}    port $FRONTEND_PORT  http://localhost:$FRONTEND_PORT  (PROD)"
+    else
+        echo -e "  ${RED}● Frontend${NC}    FAILED TO START"
+        result=1
+    fi
+
+    echo -e "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+
+    if [ $result -eq 0 ]; then
+        log_success "All services started in PRODUCTION mode. Access: http://localhost:$FRONTEND_PORT"
+    else
+        log_error "Some services failed to start"
+    fi
+
+    return $result
 }
 
 # =============================================================================
@@ -733,9 +870,9 @@ show_logs() {
         postgres|postgresql)
             log_info "PostgreSQL logs (last $lines lines):"
             if [ -f /var/log/postgresql/postgresql-16-main.log ]; then
-                tail -n "$lines" /var/log/postgresql/postgresql-16-main.log 2>/dev/null
+                sudo tail -n "$lines" /var/log/postgresql/postgresql-16-main.log 2>/dev/null || tail -n "$lines" /var/log/postgresql/postgresql-16-main.log 2>/dev/null || log_error "Could not read PostgreSQL logs (try: sudo ./manage.sh logs postgres)"
             elif [ -f /var/log/postgresql/postgresql-15-main.log ]; then
-                tail -n "$lines" /var/log/postgresql/postgresql-15-main.log 2>/dev/null
+                sudo tail -n "$lines" /var/log/postgresql/postgresql-15-main.log 2>/dev/null || tail -n "$lines" /var/log/postgresql/postgresql-15-main.log 2>/dev/null || log_error "Could not read PostgreSQL logs"
             else
                 journalctl -u postgresql -n "$lines" --no-pager 2>/dev/null || log_error "Could not read PostgreSQL logs"
             fi
@@ -745,7 +882,8 @@ show_logs() {
             if [ -f /var/log/redis/redis-server.log ]; then
                 tail -n "$lines" /var/log/redis/redis-server.log 2>/dev/null
             else
-                journalctl -u redis-server -n "$lines" --no-pager 2>/dev/null || log_error "Could not read Redis logs"
+                # Redis was started with --daemonize yes, logs go to stdout by default
+                log_info "Redis running in background mode (check /var/log/redis/ or use redis-cli INFO)"
             fi
             ;;
         minio)
@@ -826,6 +964,54 @@ db_generate() {
     cd "$APP_DIR/server"
     npx prisma generate
     log_success "Prisma client generated"
+}
+
+db_backup() {
+    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local backup_file="$APP_DIR/backups/zartsa_${timestamp}.sql.gz"
+    mkdir -p "$APP_DIR/backups"
+    log_info "Backing up database '$DB_NAME'..."
+    PGPASSWORD="$DB_PASS" pg_dump -U "$DB_USER" -h localhost -p "$POSTGRES_PORT" -d "$DB_NAME" | gzip > "$backup_file"
+    if [ $? -eq 0 ]; then
+        log_success "Database backed up to $backup_file"
+    else
+        log_error "Database backup failed"
+        return 1
+    fi
+}
+
+db_restore() {
+    local backup_file="${2:-}"
+    if [ -z "$backup_file" ]; then
+        # Find the most recent backup
+        backup_file=$(ls -t "$APP_DIR"/backups/zartsa_*.sql.gz 2>/dev/null | head -1)
+        if [ -z "$backup_file" ]; then
+            log_error "No backup files found in $APP_DIR/backups/"
+            return 1
+        fi
+        log_info "Using most recent backup: $backup_file"
+    fi
+
+    if [ ! -f "$backup_file" ]; then
+        log_error "Backup file not found: $backup_file"
+        return 1
+    fi
+
+    log_warning "This will REPLACE the current database '$DB_NAME' with the backup!"
+    read -p "Are you sure? (y/N): " confirm
+    if [[ $confirm != [yY] && $confirm != [yY][eE][sS] ]]; then
+        log_info "Cancelled"
+        return 0
+    fi
+
+    log_info "Restoring database from $backup_file..."
+    gunzip -c "$backup_file" | PGPASSWORD="$DB_PASS" psql -U "$DB_USER" -h localhost -p "$POSTGRES_PORT" -d "$DB_NAME"
+    if [ $? -eq 0 ]; then
+        log_success "Database restored from $backup_file"
+    else
+        log_error "Database restore failed"
+        return 1
+    fi
 }
 
 db_reset() {
@@ -915,7 +1101,8 @@ show_help() {
     echo -e "  ${BOLD}Usage:${NC} ./manage.sh <command> [service]"
     echo ""
     echo -e "  ${BOLD}Service Control:${NC}"
-    echo "    start [service]       Start service or all"
+    echo "    start [service]       Start service or all (dev mode)"
+    echo "    start-prod            Build & start all in PRODUCTION mode"
     echo "    stop [service]        Stop service or all"
     echo "    restart [service]     Restart service or all"
     echo "    status                Status of all services"
@@ -935,6 +1122,8 @@ show_help() {
     echo "    db-push               Push schema to database"
     echo "    db-seed               Seed database with test data"
     echo "    db-generate           Generate Prisma client"
+    echo "    db-backup             Backup database to backups/ directory"
+    echo "    db-restore [file]     Restore database from backup (uses latest if no file given)"
     echo "    db-reset              Reset database (destructive)"
     echo "    db-studio             Open Prisma Studio"
     echo ""
@@ -949,6 +1138,7 @@ show_help() {
     echo ""
     echo -e "  ${BOLD}Examples:${NC}"
     echo "    ./manage.sh start              # Start everything in dev mode"
+    echo "    ./manage.sh start-prod         # Build & start everything in production mode"
     echo "    ZARTSA_MODE=prod ./manage.sh start  # Start in production mode"
     echo "    ./manage.sh start api          # Start only the API server"
     echo "    ./manage.sh stop frontend      # Stop only the frontend"
@@ -979,41 +1169,44 @@ show_menu() {
     echo "    5)  Start MinIO"
     echo ""
     echo -e "  ${BOLD}Application${NC}"
-    echo "    6)  Start all (infra + api + frontend)"
-    echo "    7)  Stop all"
-    echo "    8)  Restart all"
-    echo "    9)  Start API server"
-    echo "   10)  Stop API server"
-    echo "   11)  Restart API server"
-    echo "   12)  Start Frontend"
-    echo "   13)  Stop Frontend"
-    echo "   14)  Restart Frontend"
+    echo "    6)  Start all (infra + api + frontend) [DEV]"
+    echo "    7)  Start all (build + start)         [PROD]"
+    echo "    8)  Stop all"
+    echo "    9)  Restart all"
+    echo "   10)  Start API server"
+    echo "   11)  Stop API server"
+    echo "   12)  Restart API server"
+    echo "   13)  Start Frontend"
+    echo "   14)  Stop Frontend"
+    echo "   15)  Restart Frontend"
     echo ""
     echo -e "  ${BOLD}Dev Tools${NC}"
-    echo "   15)  Start Prisma Studio"
-    echo "   16)  Stop Prisma Studio"
+    echo "   16)  Start Prisma Studio"
+    echo "   17)  Stop Prisma Studio"
     echo ""
     echo -e "  ${BOLD}Database${NC}"
-    echo "   17)  Push schema"
-    echo "   18)  Seed database"
-    echo "   19)  Generate Prisma client"
-    echo "   20)  Reset database"
+    echo "   18)  Push schema"
+    echo "   19)  Seed database"
+    echo "   20)  Generate Prisma client"
+    echo "   21)  Backup database"
+    echo "   22)  Restore database"
+    echo "   23)  Reset database"
     echo ""
     echo -e "  ${BOLD}Monitoring${NC}"
-    echo "   21)  Check status"
-    echo "   22)  Health check"
-    echo "   23)  View API logs"
-    echo "   24)  View Frontend logs"
-    echo "   25)  View all logs"
-    echo "   26)  Tail API logs"
-    echo "   27)  Tail Frontend logs"
-    echo "   28)  Tail all logs"
+    echo "   24)  Check status"
+    echo "   25)  Health check"
+    echo "   26)  View API logs"
+    echo "   27)  View Frontend logs"
+    echo "   28)  View all logs"
+    echo "   29)  Tail API logs"
+    echo "   30)  Tail Frontend logs"
+    echo "   31)  Tail all logs"
     echo ""
     echo -e "  ${BOLD}Utilities${NC}"
-    echo "   29)  Install dependencies"
-    echo "   30)  Build all"
-    echo "   31)  Clean build artifacts"
-    echo "   32)  Toggle dev/prod mode"
+    echo "   32)  Install dependencies"
+    echo "   33)  Build all"
+    echo "   34)  Clean build artifacts"
+    echo "   35)  Toggle dev/prod mode"
     echo ""
     echo "    0)  Exit"
     echo -e "${CYAN}══════════════════════════════════════════════${NC}"
@@ -1022,7 +1215,7 @@ show_menu() {
 run_interactive() {
     while true; do
         show_menu
-        echo -n "  Enter choice [0-32]: "
+        echo -n "  Enter choice [0-35]: "
         read -r choice
 
         case $choice in
@@ -1034,36 +1227,39 @@ run_interactive() {
             5)  start_minio ;;
             # Application
             6)  start_all ;;
-            7)  stop_all ;;
-            8)  restart_all ;;
-            9)  start_api ;;
-            10) stop_api ;;
-            11) restart_api ;;
-            12) start_frontend ;;
-            13) stop_frontend ;;
-            14) restart_frontend ;;
+            7)  start_prod_all ;;
+            8)  stop_all ;;
+            9)  restart_all ;;
+            10) start_api ;;
+            11) stop_api ;;
+            12) restart_api ;;
+            13) start_frontend ;;
+            14) stop_frontend ;;
+            15) restart_frontend ;;
             # Dev tools
-            15) start_prisma_studio ;;
-            16) stop_prisma_studio ;;
+            16) start_prisma_studio ;;
+            17) stop_prisma_studio ;;
             # Database
-            17) db_push ;;
-            18) db_seed ;;
-            19) db_generate ;;
-            20) db_reset ;;
+            18) db_push ;;
+            19) db_seed ;;
+            20) db_generate ;;
+            21) db_backup ;;
+            22) db_restore ;;
+            23) db_reset ;;
             # Monitoring
-            21) check_status ;;
-            22) health_check ;;
-            23) show_logs api ;;
-            24) show_logs frontend ;;
-            25) show_logs all ;;
-            26) tail_logs api ;;
-            27) tail_logs frontend ;;
-            28) tail_logs all ;;
+            24) check_status ;;
+            25) health_check ;;
+            26) show_logs api ;;
+            27) show_logs frontend ;;
+            28) show_logs all ;;
+            29) tail_logs api ;;
+            30) tail_logs frontend ;;
+            31) tail_logs all ;;
             # Utilities
-            29) install_deps ;;
-            30) build_all ;;
-            31) clean_build ;;
-            32)
+            32) install_deps ;;
+            33) build_all ;;
+            34) clean_build ;;
+            35)
                 if is_dev; then
                     MODE="prod"
                     log_info "Switched to PRODUCTION mode"
@@ -1078,7 +1274,7 @@ run_interactive() {
 
         # Don't pause for tail commands
         case $choice in
-            26|27|28) ;;
+            27|28|29) ;;
             *)
                 echo ""
                 echo -n "  Press Enter to continue..."
@@ -1118,6 +1314,9 @@ case "${1:-}" in
     start)
         resolve_service start "${2:-all}"
         ;;
+    start-prod)
+        start_prod_all
+        ;;
     stop)
         resolve_service stop "${2:-all}"
         ;;
@@ -1141,6 +1340,12 @@ case "${1:-}" in
         ;;
     db-seed)
         db_seed
+        ;;
+    db-backup)
+        db_backup
+        ;;
+    db-restore)
+        db_restore "$2"
         ;;
     db-generate)
         db_generate

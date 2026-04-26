@@ -51,7 +51,11 @@ export default function NewsDetailPage() {
           )}
         </div>
 
-        <div className="prose prose-sm max-w-none text-[#0d1820]" dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, '<br/>') }} />
+        <div className="prose prose-sm max-w-none text-[#0d1820]">
+          {content.split('\n').map((paragraph: string, i: number) => (
+            <p key={i}>{paragraph}</p>
+          ))}
+        </div>
 
         {announcement.sourceAuthority && (
           <p className="mt-6 text-xs text-[#637885]">{t('news.source')}: {announcement.sourceAuthority}</p>

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { rateLimit } from '../middleware/rateLimit';
-import { uploadMultiple } from '../middleware/upload';
+import { uploadMultiple, validateFileSignature } from '../middleware/upload';
 import { uploadFile } from '../services/minio.service';
 import { createComplaintSchema, updateStatusSchema, assignComplaintSchema } from '@zartsa/shared';
 import {
@@ -14,6 +14,7 @@ import {
   assignComplaint,
   exportComplaintsCsv,
 } from '../services/complaint.service';
+import { parsePagination } from '../utils/pagination';
 import type { ComplaintCategory, ComplaintStatus } from '@zartsa/shared';
 
 export const complaintsRoutes = Router();
@@ -42,6 +43,14 @@ complaintsRoutes.post(
       const files = req.files as Express.Multer.File[] | undefined;
       if (files && files.length > 0) {
         for (const file of files) {
+          // Validate file content against magic bytes (not just the client-provided MIME type)
+          if (!validateFileSignature(file.mimetype, file.buffer)) {
+            return res.status(400).json({
+              status: 'error',
+              code: 'VALIDATION_ERROR',
+              message: `File "${file.originalname}" does not appear to be a valid ${file.mimetype} image`,
+            });
+          }
           const objectName = `complaints/${Date.now()}-${file.originalname}`;
           const url = await uploadFile(objectName, file.buffer, file.mimetype);
           attachments.push(url);
@@ -59,8 +68,8 @@ complaintsRoutes.post(
   }
 );
 
-// GET /track/:reference - Track a complaint by reference number (public)
-complaintsRoutes.get('/track/:reference', async (req, res, next) => {
+// GET /track/:reference - Track a complaint by reference number (rate limited)
+complaintsRoutes.get('/track/:reference', rateLimit('complaint-track', 20, 60_000), async (req, res, next) => {
   try {
     const complaint = await getComplaintByReference(req.params.reference as string);
     if (!complaint) {
@@ -75,8 +84,7 @@ complaintsRoutes.get('/track/:reference', async (req, res, next) => {
 // GET /my - Get current user's complaints (paginated)
 complaintsRoutes.get('/my', authenticate, async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const { page, limit } = parsePagination(req.query as Record<string, string>);
     const result = await getUserComplaints(req.userId!, page, limit);
     res.json({ status: 'ok', data: result });
   } catch (err) { next(err); }
@@ -89,8 +97,7 @@ complaintsRoutes.get('/admin/all', authenticate, authorize('officer', 'admin'), 
   try {
     const status = req.query.status as ComplaintStatus | undefined;
     const category = req.query.category as ComplaintCategory | undefined;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const { page, limit } = parsePagination(req.query as Record<string, string>);
     const result = await getAllComplaints({ status, category, page, limit });
     res.json({ status: 'ok', data: result });
   } catch (err) { next(err); }

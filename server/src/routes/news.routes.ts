@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import { validate } from '../middleware/validate';
+import { parsePagination } from '../utils/pagination';
 import { createAnnouncementSchema, updateAnnouncementSchema } from '@zartsa/shared';
 import {
   listPublishedAnnouncements,
@@ -21,8 +22,7 @@ export const newsRoutes = Router();
 newsRoutes.get('/', async (req, res, next) => {
   try {
     const category = req.query.category as AnnouncementCategory | undefined;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const { page, limit } = parsePagination(req.query as Record<string, string>);
     const result = await listPublishedAnnouncements(category, page, limit);
     res.json({ status: 'ok', data: result });
   } catch (err) { next(err); }
@@ -44,8 +44,7 @@ newsRoutes.get('/:id', async (req, res, next) => {
 newsRoutes.get('/admin/all', authenticate, authorize('officer', 'admin'), async (req, res, next) => {
   try {
     const category = req.query.category as AnnouncementCategory | undefined;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
+    const { page, limit } = parsePagination(req.query as Record<string, string>);
     const result = await listAllAnnouncements(category, page, limit);
     res.json({ status: 'ok', data: result });
   } catch (err) { next(err); }
@@ -82,6 +81,6 @@ newsRoutes.post('/:id/unpublish', authenticate, authorize('officer', 'admin'), a
 newsRoutes.delete('/:id', authenticate, authorize('admin'), async (req, res, next) => {
   try {
     await deleteAnnouncement(req.params.id as string);
-    res.json({ status: 'ok' });
+    res.json({ status: 'ok', message: 'Announcement deleted' });
   } catch (err) { next(err); }
 });
